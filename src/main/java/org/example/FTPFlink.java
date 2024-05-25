@@ -7,6 +7,7 @@ import org.apache.flink.walkthrough.common.entity.Transaction;
 import org.example.ftp.FTPClientReader;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -14,10 +15,10 @@ public class FTPFlink extends KeyedProcessFunction<Long, Transaction, Alert> {
     private final String filePath;
     private FTPClientReader ftpClientReader;
 
-    public FTPFlink(String server, int port, String user, String pass, String filePath) {
+    public FTPFlink(String server, int port, String user, String pass, String filePath) throws IOException {
         this.filePath = filePath;
 
-        ftpClientReader = new FTPClientReader(server, port, user, pass);
+        ftpClientReader = FTPClientReader.newInstance(server, port, user, pass);
     }
 
 
