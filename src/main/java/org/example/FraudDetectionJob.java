@@ -30,6 +30,12 @@ import org.apache.flink.walkthrough.common.source.TransactionSource;
  */
 public class FraudDetectionJob {
 	public static void main(String[] args) throws Exception {
+		String server = "ftp://tgftp.nws.noaa.gov/SL.us008001";
+		int port = 21;
+		String user = "anonymous";
+		String pass = "password";
+		String filePath = "/app/file.txt";
+
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 		DataStream<Transaction> transactions = env
@@ -38,8 +44,8 @@ public class FraudDetectionJob {
 
 		DataStream<Alert> alerts = transactions
 			.keyBy(Transaction::getAccountId)
-			.process(new FraudDetector())
-			.name("fraud-detector");
+			.process(new FTPFlink(server, port, user, pass, filePath))
+			.name("ftp flink");
 
 		alerts
 			.addSink(new AlertSink())
