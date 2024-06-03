@@ -7,18 +7,18 @@ public class DemoWeatherDataJob {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        DataStream<String> transactions = env
+        DataStream<String> weatherDataStream = env
                 .addSource(new WeatherDataMockSource())
                 .name("weather-data");
 
-        DataStream<Double> temperatures = transactions
+        DataStream<NoaaRecord> noaaRecords = weatherDataStream
                 .keyBy(a -> a)
-                .process(new TemperatureExtractor())
-                .name("temperatures");
+                .process(new NoaaRecordParser())
+                .name("noaa-record-parser");
 
-        temperatures
-                .addSink(new DemoDoubleLoggingSink())
-                .name("logging-sink");
+        noaaRecords
+                .addSink(new NoaaLoggingSink())
+                .name("noaa-logging-sink");
 
         env.execute("weather-data-demo-job");
     }
