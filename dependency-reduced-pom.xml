@@ -86,11 +86,6 @@
                   </excludes>
                 </filter>
               </filters>
-              <transformers>
-                <transformer>
-                  <mainClass>org.example.FraudDetectionJob</mainClass>
-                </transformer>
-              </transformers>
             </configuration>
           </execution>
         </executions>
