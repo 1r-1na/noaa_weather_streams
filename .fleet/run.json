@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "maven",
+            "name": "Build",
+            "tasks": ["package"],
+        },
+
+        {
+            "type": "command",
+            "name": "Submit Job",
+            "program": "powershell.exe",
+            "workingDir": "$PROJECT_DIR$/",
+            "args": ["$PROJECT_DIR$/SubmitFlinkJob.ps1"]
+        },
+        {
+            "type": "docker-compose-up",
+            "name": "Docker-compose-up configuration",
+            "files": ["docker-compose.yml"],
+        },
+
+
+    ]
+}

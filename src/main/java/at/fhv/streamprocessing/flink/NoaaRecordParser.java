@@ -2,27 +2,36 @@ package at.fhv.streamprocessing.flink;
 
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NoaaRecordParser extends KeyedProcessFunction<String, String, NoaaRecord> {
+    private static final Logger LOG = LoggerFactory.getLogger(NoaaRecordParser.class);
+
     private static final long serialVersionUID = 1L;
     private static final double MISSING_VALUE = 999.9;
 
     @Override
     public void processElement(String record, KeyedProcessFunction<String, String, NoaaRecord>.Context context, Collector<NoaaRecord> collector) {
-        String year = parseYear(record);
 
-        double airTemperature = parseAirTemperature(record);
-        boolean isValidAirTemperature = airTemperature != MISSING_VALUE ? true : false;
-        String airTemperatureQualityCode = parseAirTemperatureQualityCode(record);
+        try {
+            String year = parseYear(record);
 
-        double windSpeedRate = parseWindSpeedRate(record);
-        boolean isValidWindSpeedRate = windSpeedRate != MISSING_VALUE ? true : false;
-        String windSpeedRateQualityCode = parseWindSpeedRateQualityCode(record);
-        String windTypeCode = parseWindTypeCode(record);
+            double airTemperature = parseAirTemperature(record);
+            boolean isValidAirTemperature = airTemperature != MISSING_VALUE ? true : false;
+            String airTemperatureQualityCode = parseAirTemperatureQualityCode(record);
 
-        collector.collect(new NoaaRecord(year, airTemperature, isValidAirTemperature, airTemperatureQualityCode, windSpeedRate, isValidWindSpeedRate, windSpeedRateQualityCode, windTypeCode));
+            double windSpeedRate = parseWindSpeedRate(record);
+            boolean isValidWindSpeedRate = windSpeedRate != MISSING_VALUE ? true : false;
+            String windSpeedRateQualityCode = parseWindSpeedRateQualityCode(record);
+            String windTypeCode = parseWindTypeCode(record);
+
+            collector.collect(new NoaaRecord(year, airTemperature, isValidAirTemperature, airTemperatureQualityCode, windSpeedRate, isValidWindSpeedRate, windSpeedRateQualityCode, windTypeCode));
+        } catch (Exception e) {
+            LOG.error("Could not parse {} char long Record {}", record.length(), record, e);
+        }
+
     }
-
     private String parseYear(String record) {
         return record.substring(15,19);
     }
