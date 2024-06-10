@@ -1,4 +1,4 @@
-package org.example.ftp.fileSources;
+package at.fhv.streamprocessing.flink.ftp.fileSources;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;

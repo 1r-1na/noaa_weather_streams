@@ -1,4 +1,4 @@
-package org.example.ftp;
+package at.fhv.streamprocessing.flink.ftp;
 
 import java.io.IOException;
 import java.util.List;
