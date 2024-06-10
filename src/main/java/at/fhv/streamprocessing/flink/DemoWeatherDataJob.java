@@ -14,37 +14,12 @@ public class DemoWeatherDataJob {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         String csvFilePath = "/opt/flink/resources/master-location-identifier-database-202401_standard.csv";
-        DataStream<MasterLocationIdentifierDatabasePojo> masterLocationIdentifierDatabaseStream = getMlidDataStream(env, csvFilePath);
+        DataStream<MasterLocationIdentifierDatabasePojo> mlidDataStream = MlidDataSource.getMlidDataStream(env, csvFilePath);
 
-        masterLocationIdentifierDatabaseStream
+        mlidDataStream
                 .addSink(new MlidLoggingSink())
                 .name("master-location-identifier-database-logging-sink");
 
         env.execute("weather-data-demo-job");
-    }
-
-    private static DataStream<MasterLocationIdentifierDatabasePojo> getMlidDataStream(StreamExecutionEnvironment env, String csvFilePath) {
-        CsvReaderFormat<MasterLocationIdentifierDatabasePojo> csvFormat = getCustomCsvFormat();
-        FileSource<MasterLocationIdentifierDatabasePojo> source = getFileSource(csvFormat, csvFilePath);
-        return env.fromSource(source, WatermarkStrategy.noWatermarks(), "csvFileSource");
-    }
-
-    private static CsvReaderFormat<MasterLocationIdentifierDatabasePojo> getCustomCsvFormat() {
-        CsvMapper mapper = new CsvMapper();
-        return CsvReaderFormat.forSchema(
-                mapper,
-                mapper
-                    .schemaFor(MasterLocationIdentifierDatabasePojo.class)
-                    .withQuoteChar('"')
-                    .withColumnSeparator(','),
-                TypeInformation.of(MasterLocationIdentifierDatabasePojo.class)
-        );
-    }
-
-    private static FileSource<MasterLocationIdentifierDatabasePojo> getFileSource(CsvReaderFormat<MasterLocationIdentifierDatabasePojo> csvFormat, String csvFilePath) {
-        return FileSource.forRecordStreamFormat(
-                csvFormat,
-                new Path(csvFilePath)
-        ).build();
     }
 }
