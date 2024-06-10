@@ -1,22 +1,11 @@
 package at.fhv.streamprocessing.flink;
 
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.connector.file.src.FileSource;
-import org.apache.flink.core.fs.Path;
-import org.apache.flink.formats.csv.CsvReaderFormat;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import org.apache.flink.util.function.SerializableFunction;
-
-import java.io.File;
-import java.math.BigDecimal;
-import java.util.function.Function;
 
 @JsonPropertyOrder({"country3","country2","country","region","subregion",
         "place_name","station_name","type", "stn_key", "status", "icao",
         "national_id", "wmo", "wban", "ghcn", "special", "lat", "lon", "elev", "tz"})
-public class LocationPojo {
+public class MasterLocationIdentifierDatabasePojo {
     public String country3;
     public String country2;
     public String country;
@@ -40,7 +29,7 @@ public class LocationPojo {
 
     @Override
     public String toString() {
-        return "LocationPojo{" +
+        return "MasterLocationIdentifierDatabasePojo{" +
                 "country3='" + country3 + '\'' +
                 ", country2='" + country2 + '\'' +
                 ", country='" + country + '\'' +

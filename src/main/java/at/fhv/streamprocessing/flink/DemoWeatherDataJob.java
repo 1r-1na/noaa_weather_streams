@@ -13,27 +13,34 @@ public class DemoWeatherDataJob {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        DataStream<String> weatherDataStream = env
-                .addSource(new WeatherDataMockSource())
-                .name("weather-data");
-
-        CsvMapper mapper = new CsvMapper();
-        CsvReaderFormat<LocationPojo> csvFormat = CsvReaderFormat.forSchema(mapper, mapper.schemaFor(LocationPojo.class).withQuoteChar('"').withColumnSeparator(','), TypeInformation.of(LocationPojo.class));
-
-        // Use the path inside the container
+        CsvReaderFormat<MasterLocationIdentifierDatabasePojo> csvFormat = getCustomCsvFormat();
         String csvFilePath = "/opt/flink/resources/master-location-identifier-database-202401_standard.csv";
+        FileSource<MasterLocationIdentifierDatabasePojo> source = getFileSource(csvFormat, csvFilePath);
+        DataStream<MasterLocationIdentifierDatabasePojo> masterLocationIdentifierDatabaseStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), "csvFileSource");
 
-        FileSource<LocationPojo> source = FileSource.forRecordStreamFormat(
+        masterLocationIdentifierDatabaseStream
+                .addSink(new MlidLoggingSink())
+                .name("master-location-identifier-database-logging-sink");
+
+        env.execute("weather-data-demo-job");
+    }
+
+    private static CsvReaderFormat<MasterLocationIdentifierDatabasePojo> getCustomCsvFormat() {
+        CsvMapper mapper = new CsvMapper();
+        return CsvReaderFormat.forSchema(
+                mapper,
+                mapper
+                    .schemaFor(MasterLocationIdentifierDatabasePojo.class)
+                    .withQuoteChar('"')
+                    .withColumnSeparator(','),
+                TypeInformation.of(MasterLocationIdentifierDatabasePojo.class)
+        );
+    }
+
+    private static FileSource<MasterLocationIdentifierDatabasePojo> getFileSource(CsvReaderFormat<MasterLocationIdentifierDatabasePojo> csvFormat, String csvFilePath) {
+        return FileSource.forRecordStreamFormat(
                 csvFormat,
                 new Path(csvFilePath)
         ).build();
-
-        DataStream<LocationPojo> locationStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), "csvFileSource");
-
-        locationStream
-                .addSink(new LoggingSink())
-                .name("noaa-logging-sink");
-
-        env.execute("weather-data-demo-job");
     }
 }

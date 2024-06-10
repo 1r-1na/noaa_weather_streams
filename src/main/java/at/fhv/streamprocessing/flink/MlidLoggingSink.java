@@ -4,15 +4,15 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LoggingSink implements SinkFunction<LocationPojo> {
+public class MlidLoggingSink implements SinkFunction<MasterLocationIdentifierDatabasePojo> {
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOG = LoggerFactory.getLogger(NoaaLoggingSink.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MlidLoggingSink.class);
 
-    public LoggingSink() { }
+    public MlidLoggingSink() { }
 
     @Override
-    public void invoke(LocationPojo record, Context context) {
+    public void invoke(MasterLocationIdentifierDatabasePojo record, Context context) {
         LOG.info("record: {}, ",
                 record);
     }
