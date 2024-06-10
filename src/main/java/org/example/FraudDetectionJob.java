@@ -29,28 +29,28 @@ import org.apache.flink.walkthrough.common.source.TransactionSource;
  * Skeleton code for the datastream walkthrough
  */
 public class FraudDetectionJob {
-	public static void main(String[] args) throws Exception {
-		String server = "ftp://tgftp.nws.noaa.gov/SL.us008001";
-		int port = 21;
-		String user = "anonymous";
-		String pass = "password";
-		String filePath = "/app/file.txt";
+	//public static void main(String[] args) throws Exception {
+	//	String server = "ftp://tgftp.nws.noaa.gov/SL.us008001";
+	//	int port = 21;
+	//	String user = "anonymous";
+	//	String pass = "password";
+	//	String filePath = "/app/file.txt";
+	//	StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		DataStream<Transaction> transactions = env
-			.addSource(new TransactionSource())
-			.name("transactions");
+	//	DataStream<Transaction> transactions = env
+	//		.addSource(new TransactionSource())
+	//		.name("transactions");
 
-		DataStream<Alert> alerts = transactions
-			.keyBy(Transaction::getAccountId)
-			.process(new FTPFlink(server, port, user, pass, filePath))
-			.name("ftp flink");
+	//	DataStream<Alert> alerts = transactions
+	//		.keyBy(Transaction::getAccountId)
+	//		.process(new FTPFlink(server, port, user, pass, filePath))
+	//		.name("ftp flink");
 
-		alerts
-			.addSink(new AlertSink())
-			.name("send-alerts");
+	//	alerts
+	//		.addSink(new AlertSink())
+	//		.name("send-alerts");
 
-		env.execute("Fraud Detection");
-	}
+	//	env.execute("Fraud Detection");
+	//}
 }

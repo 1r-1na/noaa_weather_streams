@@ -1,4 +1,4 @@
-package org.example.ftp;
+package at.fhv.streamprocessing.flink.ftp;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -17,6 +17,26 @@ public class FTPClientReader {
         this.ftpClient = ftpClient;
     }
 
+    public void changeDir(String folderPath) {
+        try {
+            ftpClient.changeWorkingDirectory(folderPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public List<String> listFilesInCurrentFolder() {
+        try {
+            return Arrays.stream(ftpClient.listFiles())
+                .filter(FTPFile::isFile)
+                .map(FTPFile::getName)
+                .filter(name -> name.endsWith(".gz"))
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     public InputStream readFile(String filePath) throws IOException {
         InputStream inputStream = ftpClient.retrieveFileStream(filePath);
         if (inputStream == null) {

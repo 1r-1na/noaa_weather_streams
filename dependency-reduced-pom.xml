@@ -192,7 +192,7 @@
     <maven.compiler.source>${target.java.version}</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <log4j.version>2.17.1</log4j.version>
-    <target.java.version>1.8</target.java.version>
+    <target.java.version>11</target.java.version>
     <flink.version>1.19.0</flink.version>
   </properties>
 </project>
