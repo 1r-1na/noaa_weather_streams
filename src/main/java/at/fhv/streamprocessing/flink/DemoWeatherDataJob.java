@@ -1,11 +1,5 @@
 package at.fhv.streamprocessing.flink;
 
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.connector.file.src.FileSource;
-import org.apache.flink.core.fs.Path;
-import org.apache.flink.formats.csv.CsvReaderFormat;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import at.fhv.streamprocessing.flink.ftp.FTPSourceFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
