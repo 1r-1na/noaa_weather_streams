@@ -13,16 +13,20 @@ public class DemoWeatherDataJob {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        CsvReaderFormat<MasterLocationIdentifierDatabasePojo> csvFormat = getCustomCsvFormat();
         String csvFilePath = "/opt/flink/resources/master-location-identifier-database-202401_standard.csv";
-        FileSource<MasterLocationIdentifierDatabasePojo> source = getFileSource(csvFormat, csvFilePath);
-        DataStream<MasterLocationIdentifierDatabasePojo> masterLocationIdentifierDatabaseStream = env.fromSource(source, WatermarkStrategy.noWatermarks(), "csvFileSource");
+        DataStream<MasterLocationIdentifierDatabasePojo> masterLocationIdentifierDatabaseStream = getMlidDataStream(env, csvFilePath);
 
         masterLocationIdentifierDatabaseStream
                 .addSink(new MlidLoggingSink())
                 .name("master-location-identifier-database-logging-sink");
 
         env.execute("weather-data-demo-job");
+    }
+
+    private static DataStream<MasterLocationIdentifierDatabasePojo> getMlidDataStream(StreamExecutionEnvironment env, String csvFilePath) {
+        CsvReaderFormat<MasterLocationIdentifierDatabasePojo> csvFormat = getCustomCsvFormat();
+        FileSource<MasterLocationIdentifierDatabasePojo> source = getFileSource(csvFormat, csvFilePath);
+        return env.fromSource(source, WatermarkStrategy.noWatermarks(), "csvFileSource");
     }
 
     private static CsvReaderFormat<MasterLocationIdentifierDatabasePojo> getCustomCsvFormat() {
