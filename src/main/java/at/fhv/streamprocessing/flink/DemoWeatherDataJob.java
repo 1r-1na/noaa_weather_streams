@@ -9,6 +9,7 @@ public class DemoWeatherDataJob {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+        // NOAA Stream
         DataStream<String> weatherDataStream = env
                 .addSource(new FTPSourceFunction())
                 .name("weather-data");
@@ -21,6 +22,14 @@ public class DemoWeatherDataJob {
         noaaRecords
                 .addSink(new NoaaLoggingSink())
                 .name("noah-logging-sink");
+
+        // MLID Stream
+        String csvFilePath = "/opt/flink/resources/master-location-identifier-database-202401_standard.csv";
+        DataStream<MasterLocationIdentifierDatabasePojo> mlidDataStream = MlidDataSource.getMlidDataStream(env, csvFilePath);
+
+        mlidDataStream
+                .addSink(new MlidLoggingSink())
+                .name("master-location-identifier-database-logging-sink");
 
         env.execute("weather-data-demo-job");
     }
