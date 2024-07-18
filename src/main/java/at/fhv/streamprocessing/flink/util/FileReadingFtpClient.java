@@ -1,7 +1,10 @@
 package at.fhv.streamprocessing.flink.util;
 
+import at.fhv.streamprocessing.flink.source.FtpDataSource;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Arrays;
@@ -11,6 +14,9 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 public class FileReadingFtpClient {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FtpDataSource.class);
+
     private final FTPClient ftpClient;
 
     public FileReadingFtpClient(FTPClient ftpClient) {
@@ -60,8 +66,7 @@ public class FileReadingFtpClient {
             return appender;
 
         } catch (Exception e) {
-            System.out.println("File " + filePath + " seems to be corrupted!");
-            e.printStackTrace();
+            LOG.error("File {} seems to be corrupted!", filePath, e);
             return List.of();
         }
 
