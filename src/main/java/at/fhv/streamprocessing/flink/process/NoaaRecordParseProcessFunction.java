@@ -19,47 +19,65 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
             String year = parseYear(record);
 
             double airTemperature = parseAirTemperature(record);
-            boolean isValidAirTemperature = airTemperature != MISSING_VALUE ? true : false;
+            boolean isValidAirTemperature = airTemperature != MISSING_VALUE;
             String airTemperatureQualityCode = parseAirTemperatureQualityCode(record);
 
             double windSpeedRate = parseWindSpeedRate(record);
-            boolean isValidWindSpeedRate = windSpeedRate != MISSING_VALUE ? true : false;
+            boolean isValidWindSpeedRate = windSpeedRate != MISSING_VALUE;
             String windSpeedRateQualityCode = parseWindSpeedRateQualityCode(record);
             String windTypeCode = parseWindTypeCode(record);
 
-            collector.collect(new NoaaRecord(year, airTemperature, isValidAirTemperature, airTemperatureQualityCode, windSpeedRate, isValidWindSpeedRate, windSpeedRateQualityCode, windTypeCode));
+            String latitude = parseLatitude(record);
+            String longitude = parseLongitude(record);
+            String wban = parseWban(record);
+
+            collector.collect(new NoaaRecord(year, airTemperature, isValidAirTemperature, airTemperatureQualityCode, windSpeedRate, isValidWindSpeedRate, windSpeedRateQualityCode, windTypeCode, latitude, longitude, wban));
         } catch (Exception e) {
             LOG.error("Could not parse {} char long Record {}", record.length(), record, e);
         }
 
     }
+
     private String parseYear(String record) {
-        return record.substring(15,19);
+        return record.substring(15, 19);
     }
 
     private double parseAirTemperature(String record) {
         double airTemperature;
         if (record.charAt(87) == '-') {
-            airTemperature = Double.parseDouble(record.substring(87,92)) / 10;
+            airTemperature = Double.parseDouble(record.substring(87, 92)) / 10;
         } else {
-            airTemperature = Double.parseDouble(record.substring(88,92)) / 10;
+            airTemperature = Double.parseDouble(record.substring(88, 92)) / 10;
         }
         return airTemperature;
     }
 
     private String parseAirTemperatureQualityCode(String record) {
-        return record.substring(92,93);
+        return record.substring(92, 93);
     }
 
     private double parseWindSpeedRate(String record) {
-        return Double.parseDouble(record.substring(65,69)) / 10;
+        return Double.parseDouble(record.substring(65, 69)) / 10;
     }
 
     private String parseWindSpeedRateQualityCode(String record) {
-        return record.substring(69,70);
+        return record.substring(69, 70);
     }
 
     private String parseWindTypeCode(String record) {
-        return record.substring(64,65);
+        return record.substring(64, 65);
     }
+
+    private String parseLatitude(String record) {
+        return record.substring(29, 35);
+    }
+
+    private String parseLongitude(String record) {
+        return record.substring(35, 42);
+    }
+
+    private String parseWban(String record) {
+        return record.substring(10, 15);
+    }
+
 }

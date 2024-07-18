@@ -1,5 +1,7 @@
 package at.fhv.streamprocessing.flink.record;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class NoaaRecord {
     final private String year;
     final double airTemperature;
@@ -9,8 +11,15 @@ public class NoaaRecord {
     final boolean isValidWindSpeedRate;
     final String windSpeedRateQualityCode;
     final String windTypeCode;
+    final String latlon;
+    private String countryCode;
 
-    public NoaaRecord(String year, double airTemperature, boolean isValidAirTemperature, String airTemperatureQualityCode, double windSpeedRate, boolean isValidWindSpeedRate, String windSpeedRateQualityCode, String windTypeCode) {
+    private final String wban;
+
+    private final long timestamp;
+
+
+    public NoaaRecord(String year, double airTemperature, boolean isValidAirTemperature, String airTemperatureQualityCode, double windSpeedRate, boolean isValidWindSpeedRate, String windSpeedRateQualityCode, String windTypeCode, String latitude, String longitude, String wban) {
         this.year = year;
         this.airTemperature = airTemperature;
         this.isValidAirTemperature = isValidAirTemperature;
@@ -19,6 +28,9 @@ public class NoaaRecord {
         this.isValidWindSpeedRate = isValidWindSpeedRate;
         this.windSpeedRateQualityCode = windSpeedRateQualityCode;
         this.windTypeCode = windTypeCode;
+        this.latlon = latitude + longitude;
+        this.timestamp = System.currentTimeMillis();
+        this.wban = wban;
     }
 
     public String year() {
@@ -51,5 +63,23 @@ public class NoaaRecord {
 
     public String windTypeCode() {
         return windTypeCode;
+    }
+
+    public String getLatitudeAndLongitude() {
+        return latlon;
+    }
+
+    public long timestamp() {
+        return timestamp;
+    }
+
+    public String wban() {
+        return wban;
+    }
+
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 }

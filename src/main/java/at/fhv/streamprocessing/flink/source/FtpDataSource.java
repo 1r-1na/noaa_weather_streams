@@ -26,8 +26,12 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
         ftpClient.changeDir(filePath);
         List<String> fileNames = ftpClient.listFilesInCurrentFolder();
         for (String fileName : fileNames) {
+            LOG.info(fileName);
             if (isCanceled) {
                 return;
+            }
+            if(fileName.split("-")[1].equals("99999")) {
+                continue;
             }
             try {
                 ftpClient.readLinesOfFile(fileName).forEach(sourceContext::collect);

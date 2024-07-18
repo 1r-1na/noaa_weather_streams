@@ -5,7 +5,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonPro
 @JsonPropertyOrder({"country3","country2","country","region","subregion",
         "place_name","station_name","type", "stn_key", "status", "icao",
         "national_id", "wmo", "wban", "ghcn", "special", "lat", "lon", "elev", "tz"})
-public class MasterLocationIdentifierDatabasePojo {
+public class MasterLocationIdentifierRecord {
     public String country3;
     public String country2;
     public String country;
@@ -26,6 +26,13 @@ public class MasterLocationIdentifierDatabasePojo {
     public String lon;
     public String elev;
     public String tz;
+
+    public long timestamp = System.currentTimeMillis();
+
+    public String getLatitudeAndLongitude() {
+        return lat + lon;
+    }
+
 
     @Override
     public String toString() {
