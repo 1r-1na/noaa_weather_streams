@@ -1,12 +1,13 @@
-package at.fhv.streamprocessing.flink;
+package at.fhv.streamprocessing.flink.process;
 
+import at.fhv.streamprocessing.flink.record.NoaaRecord;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NoaaRecordParser extends KeyedProcessFunction<String, String, NoaaRecord> {
-    private static final Logger LOG = LoggerFactory.getLogger(NoaaRecordParser.class);
+public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String, String, NoaaRecord> {
+    private static final Logger LOG = LoggerFactory.getLogger(NoaaRecordParseProcessFunction.class);
 
     private static final long serialVersionUID = 1L;
     private static final double MISSING_VALUE = 999.9;

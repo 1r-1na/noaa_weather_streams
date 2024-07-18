@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink;
+package at.fhv.streamprocessing.flink.record;
 
 public class NoaaRecord {
     final private String year;

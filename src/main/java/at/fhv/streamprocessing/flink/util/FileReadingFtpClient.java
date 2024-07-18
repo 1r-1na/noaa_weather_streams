@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink.ftp;
+package at.fhv.streamprocessing.flink.util;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
-public class FTPClientReader {
+public class FileReadingFtpClient {
     private final FTPClient ftpClient;
 
-    public FTPClientReader(FTPClient ftpClient) {
+    public FileReadingFtpClient(FTPClient ftpClient) {
         this.ftpClient = ftpClient;
     }
 
@@ -67,26 +67,12 @@ public class FTPClientReader {
 
     }
 
-    public List<String> readLinesOfFilesInFolder(String folderPath) throws IOException {
-        ftpClient.changeWorkingDirectory(folderPath);
-        FTPFile[] remoteFiles = ftpClient.listFiles();
-        return Arrays.stream(remoteFiles)
-                .filter(FTPFile::isFile)
-                .map(FTPFile::getName)
-                .filter(name -> name.endsWith(".gz"))
-                .flatMap(fileName -> {
-                    System.out.println(fileName);
-                    return readLinesOfFile(fileName).stream();
-                })
-                .collect(Collectors.toList());
-    }
-
-    public static FTPClientReader newInstance(String server, int port, String user, String pass) throws IOException {
+    public static FileReadingFtpClient newInstance(String server, int port, String user, String pass) throws IOException {
         FTPClient ftpClient = new FTPClient();
         ftpClient.connect(server, port);
         ftpClient.login(user, pass);
         ftpClient.enterLocalPassiveMode();
         ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
-        return new FTPClientReader(ftpClient);
+        return new FileReadingFtpClient(ftpClient);
     }
 }

@@ -1,6 +1,12 @@
-package at.fhv.streamprocessing.flink;
+package at.fhv.streamprocessing.flink.job;
 
-import at.fhv.streamprocessing.flink.ftp.FTPSourceFunction;
+import at.fhv.streamprocessing.flink.record.MasterLocationIdentifierDatabasePojo;
+import at.fhv.streamprocessing.flink.record.NoaaRecord;
+import at.fhv.streamprocessing.flink.process.NoaaRecordParseProcessFunction;
+import at.fhv.streamprocessing.flink.source.FtpDataSource;
+import at.fhv.streamprocessing.flink.sink.MlidLoggingSink;
+import at.fhv.streamprocessing.flink.sink.NoaaLoggingSink;
+import at.fhv.streamprocessing.flink.source.MlidDataSource;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -11,12 +17,12 @@ public class DemoWeatherDataJob {
 
         // NOAA Stream
         DataStream<String> weatherDataStream = env
-                .addSource(new FTPSourceFunction())
+                .addSource(new FtpDataSource())
                 .name("weather-data");
 
         DataStream<NoaaRecord> noaaRecords = weatherDataStream
                 .keyBy(a -> a)
-                .process(new NoaaRecordParser())
+                .process(new NoaaRecordParseProcessFunction())
                 .name("noah-record-parser");
 
         noaaRecords

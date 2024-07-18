@@ -1,5 +1,6 @@
-package at.fhv.streamprocessing.flink;
+package at.fhv.streamprocessing.flink.source;
 
+import at.fhv.streamprocessing.flink.record.MasterLocationIdentifierDatabasePojo;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.file.src.FileSource;

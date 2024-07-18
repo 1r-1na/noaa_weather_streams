@@ -1,5 +1,6 @@
-package at.fhv.streamprocessing.flink;
+package at.fhv.streamprocessing.flink.sink;
 
+import at.fhv.streamprocessing.flink.record.NoaaRecord;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

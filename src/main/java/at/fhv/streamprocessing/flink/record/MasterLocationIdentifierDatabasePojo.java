@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink;
+package at.fhv.streamprocessing.flink.record;
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
