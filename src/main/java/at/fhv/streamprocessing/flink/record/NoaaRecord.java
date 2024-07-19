@@ -1,6 +1,7 @@
 package at.fhv.streamprocessing.flink.record;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class NoaaRecord {
     final private String year;
@@ -11,11 +12,10 @@ public class NoaaRecord {
     final boolean isValidWindSpeedRate;
     final String windSpeedRateQualityCode;
     final String windTypeCode;
-    final String latlon;
+    final String latitude;
+    final String longitude;
     private String countryCode;
-
     private final String wban;
-
     private final long timestamp;
 
 
@@ -28,7 +28,8 @@ public class NoaaRecord {
         this.isValidWindSpeedRate = isValidWindSpeedRate;
         this.windSpeedRateQualityCode = windSpeedRateQualityCode;
         this.windTypeCode = windTypeCode;
-        this.latlon = latitude + longitude;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.timestamp = System.currentTimeMillis();
         this.wban = wban;
     }
@@ -65,12 +66,16 @@ public class NoaaRecord {
         return windTypeCode;
     }
 
-    public String getLatitudeAndLongitude() {
-        return latlon;
-    }
-
     public long timestamp() {
         return timestamp;
+    }
+
+    public String latitude() {
+        return latitude;
+    }
+
+    public String longitude() {
+        return longitude;
     }
 
     public String wban() {
@@ -80,6 +85,6 @@ public class NoaaRecord {
 
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
     }
 }

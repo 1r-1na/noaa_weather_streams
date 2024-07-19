@@ -55,11 +55,9 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
             Thread.sleep(1000 * 60 * 2);
         }
 
-        
     }
 
     private void tick( SourceContext<String> sourceContext) throws IOException {
-
 
         LOG.info("Looking for changes in monitored files...");
         FileReadingFtpClient ftpClient = FileReadingFtpClient.newInstance(SERVER_IP, SERVER_PORT, USERNAME, PASSWORD);

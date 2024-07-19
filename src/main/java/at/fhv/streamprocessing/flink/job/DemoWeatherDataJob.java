@@ -1,21 +1,19 @@
 package at.fhv.streamprocessing.flink.job;
 
-import at.fhv.streamprocessing.flink.record.MasterLocationIdentifierRecord;
+import at.fhv.streamprocessing.flink.Constants;
+import at.fhv.streamprocessing.flink.process.NoaaMildBroadcastProcessFunction;
+import at.fhv.streamprocessing.flink.record.LocalizedNoaaRecord;
+import at.fhv.streamprocessing.flink.record.MlidRecord;
 import at.fhv.streamprocessing.flink.record.NoaaRecord;
 import at.fhv.streamprocessing.flink.process.NoaaRecordParseProcessFunction;
 import at.fhv.streamprocessing.flink.sink.GenericLoggingSink;
 import at.fhv.streamprocessing.flink.source.FtpDataSource;
 import at.fhv.streamprocessing.flink.source.MlidDataSource;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.co.ProcessJoinFunction;
-import org.apache.flink.util.Collector;
-
-import java.time.Duration;
 
 public class DemoWeatherDataJob {
 
@@ -24,9 +22,8 @@ public class DemoWeatherDataJob {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        DataStream<MasterLocationIdentifierRecord> mlidDataStream = MlidDataSource
-                .getMlidDataStream(env)
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<MasterLocationIdentifierRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp));
+        BroadcastStream<MlidRecord> mlidStream = MlidDataSource.getMlidDataStream(env)
+                .broadcast(Constants.MLID_DESCRIPTOR);
 
         DataStream<NoaaRecord> noaaRecords = env
                 .addSource(new FtpDataSource())
@@ -35,16 +32,9 @@ public class DemoWeatherDataJob {
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<NoaaRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
                 .name("noah-record-parser");
 
-        DataStream<Tuple2<NoaaRecord, MasterLocationIdentifierRecord>> joinedStream = noaaRecords
-                .keyBy(NoaaRecord::wban)
-                .intervalJoin(mlidDataStream.keyBy(a -> StringUtils.leftPad(a.wban, 5, '0')))
-                .between(Duration.ofSeconds(-50), Duration.ofSeconds(50))
-                .process(new ProcessJoinFunction<>() {
-                    @Override
-                    public void processElement(NoaaRecord left, MasterLocationIdentifierRecord right, Context ctx, Collector<Tuple2<NoaaRecord, MasterLocationIdentifierRecord>> out) throws Exception {
-                        out.collect(new Tuple2<>(left, right));
-                    }
-                });
+        DataStream<LocalizedNoaaRecord> joinedStream = noaaRecords
+                .connect(mlidStream)
+                .process(new NoaaMildBroadcastProcessFunction());
 
         joinedStream
                 .addSink(new GenericLoggingSink<>("joined-data"))
