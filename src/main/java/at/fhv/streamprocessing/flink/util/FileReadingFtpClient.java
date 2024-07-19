@@ -3,6 +3,7 @@ package at.fhv.streamprocessing.flink.util;
 import at.fhv.streamprocessing.flink.source.FtpDataSource;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,13 +32,13 @@ public class FileReadingFtpClient {
         }
     }
     
-    public List<String> listFilesInCurrentFolder() {
+    public List<Tuple2<String, Long>> listFilesInCurrentFolder() {
         try {
             return Arrays.stream(ftpClient.listFiles())
-                .filter(FTPFile::isFile)
-                .map(FTPFile::getName)
-                .filter(name -> name.endsWith(".gz"))
-                .collect(Collectors.toList());
+                    .filter(FTPFile::isFile)
+                    .filter(file -> file.getName().endsWith(".gz"))
+                    .map(file -> new Tuple2<>(file.getName(), file.getTimestamp().getTimeInMillis()))
+                    .collect(Collectors.toList());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
