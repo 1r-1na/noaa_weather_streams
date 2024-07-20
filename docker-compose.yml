@@ -25,3 +25,15 @@ services:
         taskmanager.numberOfTaskSlots: 5
     volumes:
       - ./src/main/resources:/opt/flink/resources
+
+  postgres:
+    image: postgres
+    restart: "unless-stopped"
+    ports:
+      - "54321:5432"
+    environment:
+      POSTGRES_PASSWORD: dev_pw
+      POSTGRES_USER: dev_user
+      POSTGRES_DB: default
+    volumes:
+      - ./postgres:/docker-entrypoint-initdb.d

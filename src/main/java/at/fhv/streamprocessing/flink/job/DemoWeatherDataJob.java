@@ -3,15 +3,12 @@ package at.fhv.streamprocessing.flink.job;
 import at.fhv.streamprocessing.flink.Constants;
 import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
 import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
+import at.fhv.streamprocessing.flink.function.sink.PostgresAggregatedDataSink;
 import at.fhv.streamprocessing.flink.function.window.WindowDoubleAndCountFunction;
-import at.fhv.streamprocessing.flink.record.LocalizedNoaaRecord;
-import at.fhv.streamprocessing.flink.record.MlidRecord;
-import at.fhv.streamprocessing.flink.record.NoaaRecord;
+import at.fhv.streamprocessing.flink.record.*;
 import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunction;
-import at.fhv.streamprocessing.flink.function.sink.GenericLoggingSink;
 import at.fhv.streamprocessing.flink.function.source.FtpDataSource;
 import at.fhv.streamprocessing.flink.function.source.MlidDataSource;
-import at.fhv.streamprocessing.flink.record.SingleValueRecord;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
@@ -20,6 +17,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 
 import java.time.Duration;
+import java.time.Instant;
 
 public class DemoWeatherDataJob {
 
@@ -35,7 +33,6 @@ public class DemoWeatherDataJob {
                 .addSource(new FtpDataSource())
                 .keyBy(a -> a)
                 .process(new NoaaRecordParseProcessFunction())
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<NoaaRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
                 .name("noah-record-parser");
 
         DataStream<LocalizedNoaaRecord> localizedNoaaRecords = noaaRecords
@@ -53,8 +50,13 @@ public class DemoWeatherDataJob {
                 .aggregate(new AverageAggregate(), new WindowDoubleAndCountFunction());
 
         avgTempPerDayAndCountry
-                .addSink(new GenericLoggingSink<>("joined-data"))
-                .name("joined-data-sink");
+                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "AVG", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
+                .addSink(PostgresAggregatedDataSink.createSink())
+                .name("postgres-sink");
+
+//        avgTempPerDayAndCountry
+//                .addSink(new GenericLoggingSink<>("joined-data"))
+//                .name("joined-data-sink");
 
         env.execute("weather-data-demo-job");
     }
