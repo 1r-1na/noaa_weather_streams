@@ -17,11 +17,13 @@ public class LiveDataRecord {
     private String lat;
     private String lon;
 
+    private String country;
+
 
     public LiveDataRecord() {
     }
 
-    public LiveDataRecord(String wban, String measurementType, Character code, double value, Instant timestamp, String lat, String lon) {
+    public LiveDataRecord(String wban, String measurementType, Character code, double value, Instant timestamp, String lat, String lon, String country) {
         this.wban = wban;
         this.measurementType = measurementType;
         this.code = code;
@@ -57,6 +59,10 @@ public class LiveDataRecord {
 
     public String lon() {
         return lon;
+    }
+
+    public String country() {
+        return country;
     }
 
     @Override
