@@ -1,19 +1,25 @@
 package at.fhv.streamprocessing.flink.job;
 
 import at.fhv.streamprocessing.flink.Constants;
-import at.fhv.streamprocessing.flink.process.NoaaMildBroadcastProcessFunction;
+import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
+import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
+import at.fhv.streamprocessing.flink.function.window.WindowDoubleAndCountFunction;
 import at.fhv.streamprocessing.flink.record.LocalizedNoaaRecord;
 import at.fhv.streamprocessing.flink.record.MlidRecord;
 import at.fhv.streamprocessing.flink.record.NoaaRecord;
-import at.fhv.streamprocessing.flink.process.NoaaRecordParseProcessFunction;
-import at.fhv.streamprocessing.flink.sink.GenericLoggingSink;
-import at.fhv.streamprocessing.flink.source.FtpDataSource;
-import at.fhv.streamprocessing.flink.source.MlidDataSource;
+import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunction;
+import at.fhv.streamprocessing.flink.function.sink.GenericLoggingSink;
+import at.fhv.streamprocessing.flink.function.source.FtpDataSource;
+import at.fhv.streamprocessing.flink.function.source.MlidDataSource;
+import at.fhv.streamprocessing.flink.record.SingleValueRecord;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+
+import java.time.Duration;
 
 public class DemoWeatherDataJob {
 
@@ -32,11 +38,21 @@ public class DemoWeatherDataJob {
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<NoaaRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
                 .name("noah-record-parser");
 
-        DataStream<LocalizedNoaaRecord> joinedStream = noaaRecords
+        DataStream<LocalizedNoaaRecord> localizedNoaaRecords = noaaRecords
                 .connect(mlidStream)
                 .process(new NoaaMildBroadcastProcessFunction());
 
-        joinedStream
+        DataStream<SingleValueRecord> temperatureStream = localizedNoaaRecords
+                .filter(NoaaRecord::isValidAirTemperature)
+                .map(r -> new SingleValueRecord(r.airTemperature(), r.country(), r.timestamp()));
+
+        DataStream<SingleValueRecord> avgTempPerDayAndCountry = temperatureStream
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
+                .keyBy(SingleValueRecord::country)
+                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
+                .aggregate(new AverageAggregate(), new WindowDoubleAndCountFunction());
+
+        avgTempPerDayAndCountry
                 .addSink(new GenericLoggingSink<>("joined-data"))
                 .name("joined-data-sink");
 

@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink.source;
+package at.fhv.streamprocessing.flink.function.source;
 
 import at.fhv.streamprocessing.flink.record.MlidRecord;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;

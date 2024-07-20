@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink.process;
+package at.fhv.streamprocessing.flink.function.process;
 
 import at.fhv.streamprocessing.flink.Constants;
 import at.fhv.streamprocessing.flink.record.LocalizedNoaaRecord;

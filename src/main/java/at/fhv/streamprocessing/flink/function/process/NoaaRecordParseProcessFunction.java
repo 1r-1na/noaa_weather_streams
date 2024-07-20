@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink.process;
+package at.fhv.streamprocessing.flink.function.process;
 
 import at.fhv.streamprocessing.flink.record.NoaaRecord;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
@@ -6,8 +6,15 @@ import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+
 public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String, String, NoaaRecord> {
     private static final Logger LOG = LoggerFactory.getLogger(NoaaRecordParseProcessFunction.class);
+
+    private final static DateTimeFormatter NOAA_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+
 
     private static final long serialVersionUID = 1L;
     private static final double MISSING_VALUE = 999.9;
@@ -31,7 +38,9 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
             String longitude = parseLongitude(record);
             String wban = parseWban(record);
 
-            collector.collect(new NoaaRecord(year, airTemperature, isValidAirTemperature, airTemperatureQualityCode, windSpeedRate, isValidWindSpeedRate, windSpeedRateQualityCode, windTypeCode, latitude, longitude, wban));
+            long date = parseDate(record);
+
+            collector.collect(new NoaaRecord(year, airTemperature, isValidAirTemperature, airTemperatureQualityCode, windSpeedRate, isValidWindSpeedRate, windSpeedRateQualityCode, windTypeCode, latitude, longitude, wban, date));
         } catch (Exception e) {
             LOG.error("Could not parse {} char long Record {}", record.length(), record, e);
         }
@@ -43,13 +52,7 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
     }
 
     private double parseAirTemperature(String record) {
-        double airTemperature;
-        if (record.charAt(87) == '-') {
-            airTemperature = Double.parseDouble(record.substring(87, 92)) / 10;
-        } else {
-            airTemperature = Double.parseDouble(record.substring(88, 92)) / 10;
-        }
-        return airTemperature;
+        return Double.parseDouble(record.substring(87, 92)) / 10;
     }
 
     private String parseAirTemperatureQualityCode(String record) {
@@ -78,6 +81,12 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
 
     private String parseWban(String record) {
         return record.substring(10, 15);
+    }
+
+    private long parseDate(String record) {
+        String dateString = record.substring(15,27);
+        LocalDateTime ldt = LocalDateTime.parse(dateString, NOAA_TIMESTAMP_FORMAT);
+        return ldt.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
 }

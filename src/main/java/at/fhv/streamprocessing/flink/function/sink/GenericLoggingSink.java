@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink.sink;
+package at.fhv.streamprocessing.flink.function.sink;
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.slf4j.Logger;

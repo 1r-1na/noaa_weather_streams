@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink.source;
+package at.fhv.streamprocessing.flink.function.source;
 
 import at.fhv.streamprocessing.flink.util.FileReadingFtpClient;
 import org.apache.flink.api.java.tuple.Tuple2;

@@ -18,7 +18,8 @@ public class LocalizedNoaaRecord extends NoaaRecord {
                 noaaRecord.windTypeCode(),
                 noaaRecord.latitude(),
                 noaaRecord.longitude(),
-                noaaRecord.wban());
+                noaaRecord.wban(),
+                noaaRecord.timestamp());
 
         this.country = mlidRecord.country;
     }

@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink.source;
+package at.fhv.streamprocessing.flink.function.source;
 
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 

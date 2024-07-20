@@ -19,7 +19,7 @@ public class NoaaRecord {
     private final long timestamp;
 
 
-    public NoaaRecord(String year, double airTemperature, boolean isValidAirTemperature, String airTemperatureQualityCode, double windSpeedRate, boolean isValidWindSpeedRate, String windSpeedRateQualityCode, String windTypeCode, String latitude, String longitude, String wban) {
+    public NoaaRecord(String year, double airTemperature, boolean isValidAirTemperature, String airTemperatureQualityCode, double windSpeedRate, boolean isValidWindSpeedRate, String windSpeedRateQualityCode, String windTypeCode, String latitude, String longitude, String wban, long timestamp) {
         this.year = year;
         this.airTemperature = airTemperature;
         this.isValidAirTemperature = isValidAirTemperature;
@@ -30,7 +30,7 @@ public class NoaaRecord {
         this.windTypeCode = windTypeCode;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = timestamp;
         this.wban = wban;
     }
 

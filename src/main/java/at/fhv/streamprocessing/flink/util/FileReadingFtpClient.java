@@ -1,6 +1,6 @@
 package at.fhv.streamprocessing.flink.util;
 
-import at.fhv.streamprocessing.flink.source.FtpDataSource;
+import at.fhv.streamprocessing.flink.function.source.FtpDataSource;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.flink.api.java.tuple.Tuple2;
