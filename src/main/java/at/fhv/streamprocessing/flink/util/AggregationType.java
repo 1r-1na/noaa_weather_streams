@@ -1,6 +1,8 @@
 package at.fhv.streamprocessing.flink.util;
 
 import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
+import at.fhv.streamprocessing.flink.function.aggregate.MaxAggregate;
+import at.fhv.streamprocessing.flink.function.aggregate.MinAggregate;
 import at.fhv.streamprocessing.flink.record.AggregatedDataRecord;
 import org.apache.flink.api.common.functions.AggregateFunction;
 
@@ -8,7 +10,10 @@ import java.util.function.Supplier;
 
 public enum AggregationType {
 
-    AVG("AVG", AverageAggregate::new);
+    AVG("AVG", AverageAggregate::new),
+    MIN("MIN", MinAggregate::new),
+    MAX("MAX", MaxAggregate::new);
+
 
     private final String typeId;
     private final Supplier<AggregateFunction<AggregatedDataRecord, ?, AggregatedDataRecord>> supplierFunction;

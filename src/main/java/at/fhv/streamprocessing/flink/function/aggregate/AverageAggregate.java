@@ -26,7 +26,7 @@ public class AverageAggregate implements AggregateFunction<AggregatedDataRecord,
         int count = acc.f1;
 
         Instant startTs = add.startTs().isBefore(accRecord.startTs()) ? add.startTs() : accRecord.startTs();
-        AggregatedDataRecord newAcc = new AggregatedDataRecord(add.country(), add.measurementType(), accRecord.aggregationType(), accRecord.value() + add.value(), startTs, accRecord.durationDays());
+        AggregatedDataRecord newAcc = new AggregatedDataRecord(add.country(), add.measurementType(), accRecord.aggregationType(), accRecord.value() + add.value(), startTs, add.durationDays());
         return new Tuple2<>(newAcc, count + 1);
     }
 
@@ -46,7 +46,7 @@ public class AverageAggregate implements AggregateFunction<AggregatedDataRecord,
         double value = accRecord1.value() + accRecord2.value();
         Instant startTs = accRecord1.startTs().isBefore(accRecord2.startTs()) ? accRecord1.startTs() : accRecord2.startTs();
 
-        AggregatedDataRecord newAcc = new AggregatedDataRecord(accRecord2.country(), accRecord1.measurementType(), accRecord1.measurementType(), value, startTs, accRecord1.durationDays());
+        AggregatedDataRecord newAcc = new AggregatedDataRecord(accRecord2.country(), accRecord1.measurementType(), accRecord1.aggregationType(), value, startTs, accRecord1.durationDays());
         return new Tuple2<>(newAcc ,count);
     }
 }

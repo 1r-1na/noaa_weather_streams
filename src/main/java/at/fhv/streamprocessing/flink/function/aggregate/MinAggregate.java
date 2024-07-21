@@ -1,33 +1,38 @@
 package at.fhv.streamprocessing.flink.function.aggregate;
 
-import at.fhv.streamprocessing.flink.record.SingleValueRecord;
+import at.fhv.streamprocessing.flink.record.AggregatedDataRecord;
+import at.fhv.streamprocessing.flink.util.AggregationType;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MinAggregate implements AggregateFunction<SingleValueRecord, SingleValueRecord, SingleValueRecord> {
+import java.time.Instant;
+
+public class MinAggregate implements AggregateFunction<AggregatedDataRecord, AggregatedDataRecord, AggregatedDataRecord> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AverageAggregate.class);
 
     @Override
-    public SingleValueRecord createAccumulator() {
-        return new SingleValueRecord(0, 0, "", 0);
+    public AggregatedDataRecord createAccumulator() {
+        return new AggregatedDataRecord("", "", AggregationType.MIN.getTypeId(), 0.0, Instant.MAX, 0);
     }
 
     @Override
-    public SingleValueRecord add(SingleValueRecord add, SingleValueRecord acc) {
+    public AggregatedDataRecord add(AggregatedDataRecord add, AggregatedDataRecord acc) {
         double minValue = Math.min(acc.value(), add.value());
-        return new SingleValueRecord(minValue, acc.count() + 1, add.country(), add.timestamp());
+        Instant startTs = add.startTs().isBefore(acc.startTs()) ? add.startTs() : acc.startTs();
+        return new AggregatedDataRecord(add.country(), add.measurementType(), acc.aggregationType(), minValue, startTs, add.durationDays());
     }
 
     @Override
-    public SingleValueRecord getResult(SingleValueRecord acc) {
-        return new SingleValueRecord(acc.value(), acc.count(), acc.country(), acc.timestamp());
+    public AggregatedDataRecord getResult(AggregatedDataRecord acc) {
+        return acc;
     }
 
     @Override
-    public SingleValueRecord merge(SingleValueRecord acc1, SingleValueRecord acc2) {
+    public AggregatedDataRecord merge(AggregatedDataRecord acc1, AggregatedDataRecord acc2) {
         double minValue = Math.min(acc1.value(), acc2.value());
-        return new SingleValueRecord(minValue, acc1.count() + acc2.count(), acc1.country(), acc1.timestamp());
+        Instant startTs = acc1.startTs().isBefore(acc2.startTs()) ? acc1.startTs() : acc2.startTs();
+        return new AggregatedDataRecord(acc1.country(), acc1.measurementType(), acc1.aggregationType(), minValue, startTs, acc1.durationDays());
     }
 }
