@@ -8,9 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -60,6 +58,9 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
     private void tick( SourceContext<String> sourceContext) throws IOException {
 
         LOG.info("Looking for changes in monitored files...");
+
+        LinkedList<String> recordsToSend = new LinkedList<>();
+
         FileReadingFtpClient ftpClient = FileReadingFtpClient.newInstance(SERVER_IP, SERVER_PORT, USERNAME, PASSWORD);
         ftpClient.changeDir(FILE_PATH);
         ftpClient.listFilesInCurrentFolder()
@@ -77,7 +78,7 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
 
                         List<String> lines = ftpClient.readLinesOfFile(fileName);
                         List<String> unreadLines = lines.subList(previousReadLines, lines.size());
-                        unreadLines.forEach(sourceContext::collect);
+                        recordsToSend.addAll(unreadLines);
 
                         monitoredFiles.put(fileName, new Tuple2<>(newLastChangeTs, lines.size()));
                         LOG.info("Received {} new lines of file {}", lines.size() - previousReadLines,  fileName);
@@ -87,7 +88,16 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
                     }
                 });
 
+        Collections.shuffle(recordsToSend);
+
         LOG.info("[DONE] Looking for changes in monitored files");
+
+        LOG.info("Sending new lines in ascending order");
+
+        recordsToSend.sort(Comparator.comparing(e -> e.substring(15, 27)));
+        recordsToSend.forEach(sourceContext::collect);
+
+        LOG.info("[DONE] Sending new lines in ascending order");
     }
 
     @Override
