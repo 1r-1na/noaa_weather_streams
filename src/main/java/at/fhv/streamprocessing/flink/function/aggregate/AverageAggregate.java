@@ -11,12 +11,13 @@ public class AverageAggregate implements AggregateFunction<SingleValueRecord, Si
 
     @Override
     public SingleValueRecord createAccumulator() {
-        return new SingleValueRecord(0, 0, "", 0);
+        return new SingleValueRecord(0, 0, "", Long.MAX_VALUE);
     }
 
     @Override
     public SingleValueRecord add(SingleValueRecord add, SingleValueRecord acc) {
-        return new SingleValueRecord(acc.value() + add.value(), acc.count() + 1, add.country(), add.timestamp());
+        long lowerTs = Math.min(add.timestamp(), acc.timestamp());
+        return new SingleValueRecord(acc.value() + add.value(), acc.count() + 1, add.country(), lowerTs);
     }
 
     @Override
@@ -26,6 +27,7 @@ public class AverageAggregate implements AggregateFunction<SingleValueRecord, Si
 
     @Override
     public SingleValueRecord merge(SingleValueRecord acc1, SingleValueRecord acc2) {
-        return new SingleValueRecord(acc1.value() + acc2.value(), acc1.count() + acc2.count(), acc1.country(), acc1.timestamp());
+        long lowerTs = Math.min(acc1.timestamp(), acc2.timestamp());
+        return new SingleValueRecord(acc1.value() + acc2.value(), acc1.count() + acc2.count(), acc1.country(), lowerTs);
     }
 }

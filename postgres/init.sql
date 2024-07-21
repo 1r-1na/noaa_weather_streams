@@ -10,11 +10,12 @@ CREATE TABLE IF NOT EXISTS aggregated_data (
 
 CREATE TABLE IF NOT EXISTS quality_codes (
     wban                VARCHAR(5),
+    measurement_type    VARCHAR(255),
     code                CHAR(1),
     amount              BIGINT,
     start_ts            TIMESTAMP,
     duration_days       SMALLINT,
-    PRIMARY KEY(wban, code, start_ts, duration_days)
+    PRIMARY KEY(wban, measurement_type, code, start_ts, duration_days)
 );
 
 CREATE TABLE IF NOT EXISTS live_values(
@@ -25,5 +26,6 @@ CREATE TABLE IF NOT EXISTS live_values(
     timestamp           TIMESTAMP,
     lat                 VARCHAR(255),
     lon                 VARCHAR(255),
+    country             VARCHAR(255),
     PRIMARY KEY(wban, measurement_type)
 );

@@ -1,5 +1,6 @@
 package at.fhv.streamprocessing.flink.record;
 
+import at.fhv.streamprocessing.flink.Constants;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -10,6 +11,7 @@ import java.time.Instant;
 public class QualityCodeRecord {
 
     private String wban;
+    private String measurementType;
     private Character code;
     private long amount;
     private Instant startTs;
@@ -19,8 +21,9 @@ public class QualityCodeRecord {
     public QualityCodeRecord() {
     }
 
-    public QualityCodeRecord(String wban, Character code, long amount, Instant startTs, int durationDays) {
+    public QualityCodeRecord(String wban, String measurementType, Character code, long amount, Instant startTs, int durationDays) {
         this.wban = wban;
+        this.measurementType = measurementType;
         this.code = code;
         this.amount = amount;
         this.startTs = startTs;
@@ -29,6 +32,10 @@ public class QualityCodeRecord {
 
     public String wban() {
         return wban;
+    }
+
+    public String measurementType() {
+        return measurementType;
     }
 
     public Character code() {
@@ -47,6 +54,10 @@ public class QualityCodeRecord {
         return durationDays;
     }
 
+    public String getKey() {
+        return wban + measurementType + code;
+    }
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
@@ -61,4 +72,15 @@ public class QualityCodeRecord {
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
     }
+
+    public static QualityCodeRecord forTemperatureOfLocalizedNoaaRecord(LocalizedNoaaRecord record, int durationDays) {
+        return new QualityCodeRecord(
+                record.wban(),
+                Constants.MEASUREMENT_TYPE_TEMPERATURE,
+                record.airTemperatureQualityCode.charAt(0),
+                1,
+                Instant.ofEpochMilli(record.timestamp()),
+                durationDays);
+    }
+
 }
