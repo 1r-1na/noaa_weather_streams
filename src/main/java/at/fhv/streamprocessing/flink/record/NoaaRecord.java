@@ -113,6 +113,18 @@ public class NoaaRecord {
         return liquidPrecipitation;
     }
 
+    public boolean isValidLiquidPrecipitation() {
+        return liquidPrecipitation.isValid();
+    }
+
+    public double liquidPrecipitationDepthInMillimetersPerHour() {
+        return liquidPrecipitation.depthInMillimeters() / liquidPrecipitation.measuredTimeInHours();
+    }
+
+    public String liquidPrecipitationQualityCode() {
+        return liquidPrecipitation.qualityCode();
+    }
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);

@@ -8,7 +8,11 @@ import java.util.function.Predicate;
 
 public enum MeasurementTypes {
 
-    TEMPERATURE("TEMPERATURE", NoaaRecord::isValidAirTemperature, NoaaRecord::airTemperature, NoaaRecord::airTemperatureQualityCode);
+    TEMPERATURE("TEMPERATURE", NoaaRecord::isValidAirTemperature, NoaaRecord::airTemperature, NoaaRecord::airTemperatureQualityCode),
+    WIND("WIND", NoaaRecord::isValidWindSpeedRate, NoaaRecord::windSpeedRate, NoaaRecord::windSpeedRateQualityCode),
+    PRESSURE("ATMOSPHERIC_PRESSURE", NoaaRecord::isPressureValid, NoaaRecord::pressure, NoaaRecord::pressureQualityCode),
+    LIQUID_PRECIPITATION("LIQUID_PRECIPITATION", NoaaRecord::isValidLiquidPrecipitation, NoaaRecord::liquidPrecipitationDepthInMillimetersPerHour, NoaaRecord::liquidPrecipitationQualityCode);
+
 
     private final String measurementTypeId;
     private final Predicate<LocalizedNoaaRecord> filterFunction;

@@ -31,6 +31,7 @@ services:
     restart: "unless-stopped"
     ports:
       - "54321:5432"
+    command: -c 'max_connections=200'
     environment:
       POSTGRES_PASSWORD: dev_pw
       POSTGRES_USER: dev_user
