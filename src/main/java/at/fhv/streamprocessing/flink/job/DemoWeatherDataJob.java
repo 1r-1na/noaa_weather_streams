@@ -11,6 +11,7 @@ import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunc
 import at.fhv.streamprocessing.flink.function.source.FtpDataSource;
 import at.fhv.streamprocessing.flink.function.source.MlidDataSource;
 import at.fhv.streamprocessing.flink.util.AggregationType;
+import at.fhv.streamprocessing.flink.util.MeasurementTypes;
 import at.fhv.streamprocessing.flink.util.TimeWindows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -18,7 +19,6 @@ import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-import java.time.Instant;
 import java.util.Arrays;
 
 public class DemoWeatherDataJob {
@@ -42,53 +42,55 @@ public class DemoWeatherDataJob {
                 .process(new NoaaMildBroadcastProcessFunction());
 
 
-        // live data start
-        localizedNoaaRecords
-                .filter(NoaaRecord::isValidAirTemperature)
-                .map(r -> new LiveDataRecord(r.wban(), Constants.MEASUREMENT_TYPE_TEMPERATURE, r.airTemperatureQualityCode().charAt(0), r.airTemperature(), Instant.ofEpochMilli(r.timestamp()), r.latitude(), r.longitude(), r.country()))
-                .addSink(PostgresLiveDataSink.createSink())
-                .name("postgres-temperature-live-data-sink");
-        // live data end
+        Arrays.stream(MeasurementTypes.values()).forEach(measurementType -> {
 
-
-        Arrays.stream(TimeWindows.values()).forEach(timeWindow -> {
-
-            // minibatch aggregation quality code start
+            // live data start
             localizedNoaaRecords
-                    .filter(NoaaRecord::isValidAirTemperature)
-                    .map(r -> QualityCodeRecord.forTemperatureOfLocalizedNoaaRecord(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())))
-                    .assignTimestampsAndWatermarks(WatermarkStrategy.<QualityCodeRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
-                    .keyBy(QualityCodeRecord::getKey)
-                    .window(timeWindow.windowAssigner())
-                    .aggregate(new QualityCodeRecordCounter())
-                    .addSink(PostgresQualityCodeSink.createSink())
-                    .name("postgres-temperature-quality-code-" + timeWindow.typeId() + "-sink");
-            // minibatch aggregation quality code end
+                    .filter(measurementType::filter)
+                    .map(measurementType::noaaToLive)
+                    .addSink(PostgresLiveDataSink.createSink())
+                    .name("postgres-" + measurementType.measurementTypeId() + "-live-data-sink");
+            // live data end
 
+            Arrays.stream(TimeWindows.values()).forEach(timeWindow -> {
 
-            // minibatch aggregation country start
-
-            Arrays.stream(AggregationType.values()).forEach(type -> {
-
-                DataStream<AggregatedDataRecord> temperatureStream = localizedNoaaRecords
-                        .filter(NoaaRecord::isValidAirTemperature)
-                        .map(r -> AggregatedDataRecord.forTemperatureOfLocalizedNoaaRecord(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())));
-
-                temperatureStream
-                        .assignTimestampsAndWatermarks(WatermarkStrategy.<AggregatedDataRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
-                        .keyBy(AggregatedDataRecord::getKey)
+                // minibatch aggregation quality code start
+                localizedNoaaRecords
+                        .filter(measurementType::filter)
+                        .map(r -> measurementType.noaaToQualityCode(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())))
+                        .assignTimestampsAndWatermarks(WatermarkStrategy.<QualityCodeRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
+                        .keyBy(QualityCodeRecord::getKey)
                         .window(timeWindow.windowAssigner())
-                        .aggregate(type.aggregateFunction())
-                        .addSink(PostgresAggregatedDataSink.createSink())
-                        .name("postgres-temperature-" + type.getTypeId() + "-" + timeWindow.typeId() + "-sink");
+                        .aggregate(new QualityCodeRecordCounter())
+                        .addSink(PostgresQualityCodeSink.createSink())
+                        .name("postgres-" + measurementType.measurementTypeId() +  "-quality-code-" + timeWindow.typeId() + "-sink");
+                // minibatch aggregation quality code end
+
+
+                // minibatch aggregation country start
+
+                Arrays.stream(AggregationType.values()).forEach(aggregationType -> {
+
+                    localizedNoaaRecords
+                            .filter(measurementType::filter)
+                            .map(r -> measurementType.noaaToAggregated(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())))
+                            .assignTimestampsAndWatermarks(WatermarkStrategy.<AggregatedDataRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
+                            .keyBy(AggregatedDataRecord::getKey)
+                            .window(timeWindow.windowAssigner())
+                            .aggregate(aggregationType.aggregateFunction())
+                            .addSink(PostgresAggregatedDataSink.createSink())
+                            .name("postgres-" + measurementType.measurementTypeId() + "-" + aggregationType.getTypeId() + "-" + timeWindow.typeId() + "-sink");
+
+                });
+
+                // minibatch aggregation country end
 
             });
-
-            // minibatch aggregation country end
 
         });
 
 
         env.execute("weather-data-demo-job");
+
     }
 }

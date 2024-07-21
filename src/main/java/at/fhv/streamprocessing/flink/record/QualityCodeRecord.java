@@ -1,6 +1,5 @@
 package at.fhv.streamprocessing.flink.record;
 
-import at.fhv.streamprocessing.flink.Constants;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -71,16 +70,6 @@ public class QualityCodeRecord {
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
-    }
-
-    public static QualityCodeRecord forTemperatureOfLocalizedNoaaRecord(LocalizedNoaaRecord record, int durationDays) {
-        return new QualityCodeRecord(
-                record.wban(),
-                Constants.MEASUREMENT_TYPE_TEMPERATURE,
-                record.airTemperatureQualityCode.charAt(0),
-                1,
-                Instant.ofEpochMilli(record.timestamp()),
-                durationDays);
     }
 
 }

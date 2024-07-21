@@ -1,6 +1,5 @@
 package at.fhv.streamprocessing.flink.record;
 
-import at.fhv.streamprocessing.flink.Constants;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -74,14 +73,4 @@ public class AggregatedDataRecord {
         return HashCodeBuilder.reflectionHashCode(this);
     }
 
-    public static AggregatedDataRecord forTemperatureOfLocalizedNoaaRecord(LocalizedNoaaRecord record, int durationDays) {
-        return new AggregatedDataRecord(
-                record.country(),
-                Constants.MEASUREMENT_TYPE_TEMPERATURE,
-                null,
-                record.airTemperature(),
-                Instant.ofEpochMilli(record.timestamp()),
-                durationDays
-        );
-    }
 }

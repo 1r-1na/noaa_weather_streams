@@ -22,6 +22,4 @@ public class Constants {
             .withPassword("dev_pw")
             .build();
 
-
-    public static String  MEASUREMENT_TYPE_TEMPERATURE = "TEMPERATURE";
 }
