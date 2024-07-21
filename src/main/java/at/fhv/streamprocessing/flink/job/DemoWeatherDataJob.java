@@ -2,6 +2,8 @@ package at.fhv.streamprocessing.flink.job;
 
 import at.fhv.streamprocessing.flink.Constants;
 import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
+import at.fhv.streamprocessing.flink.function.aggregate.MaxAggregate;
+import at.fhv.streamprocessing.flink.function.aggregate.MinAggregate;
 import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
 import at.fhv.streamprocessing.flink.function.sink.PostgresAggregatedDataSink;
 import at.fhv.streamprocessing.flink.function.window.WindowDoubleAndCountFunction;
@@ -57,6 +59,28 @@ public class DemoWeatherDataJob {
 //        avgTempPerDayAndCountry
 //                .addSink(new GenericLoggingSink<>("joined-data"))
 //                .name("joined-data-sink");
+
+        DataStream<SingleValueRecord> maxTempPerDayAndCountry = temperatureStream
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
+                .keyBy(SingleValueRecord::country)
+                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
+                .aggregate(new MaxAggregate(), new WindowDoubleAndCountFunction());
+
+        maxTempPerDayAndCountry
+                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MAX", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
+                .addSink(PostgresAggregatedDataSink.createSink())
+                .name("postgres-sink");
+
+        DataStream<SingleValueRecord> minTempPerDayAndCountry = temperatureStream
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
+                .keyBy(SingleValueRecord::country)
+                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
+                .aggregate(new MinAggregate(), new WindowDoubleAndCountFunction());
+
+        minTempPerDayAndCountry
+                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MIN", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
+                .addSink(PostgresAggregatedDataSink.createSink())
+                .name("postgres-sink");
 
         env.execute("weather-data-demo-job");
     }
