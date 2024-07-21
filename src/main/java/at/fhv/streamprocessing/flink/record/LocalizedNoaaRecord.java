@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 public class LocalizedNoaaRecord extends NoaaRecord {
 
     private String country;
+
     public LocalizedNoaaRecord(NoaaRecord noaaRecord, MlidRecord mlidRecord) {
 
         super(noaaRecord.year(),
@@ -19,7 +20,12 @@ public class LocalizedNoaaRecord extends NoaaRecord {
                 noaaRecord.latitude(),
                 noaaRecord.longitude(),
                 noaaRecord.wban(),
-                noaaRecord.timestamp());
+                noaaRecord.timestamp(),
+                noaaRecord.isPressureValid(),
+                noaaRecord.pressure(),
+                noaaRecord.pressureQualityCode(),
+                noaaRecord.liquidPrecipitation()
+        );
 
         this.country = mlidRecord.country;
     }
