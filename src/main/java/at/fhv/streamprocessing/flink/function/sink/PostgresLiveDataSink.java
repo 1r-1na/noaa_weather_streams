@@ -1,8 +1,7 @@
 package at.fhv.streamprocessing.flink.function.sink;
 
+import at.fhv.streamprocessing.flink.Constants;
 import at.fhv.streamprocessing.flink.record.LiveDataRecord;
-import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
-import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.slf4j.Logger;
@@ -31,16 +30,8 @@ public class PostgresLiveDataSink {
                     ps.setString(7, record.lon());
                     ps.setString(8, record.country());
                 },
-                new JdbcExecutionOptions.Builder()
-                        .withBatchIntervalMs(1000)
-                        .withBatchSize(100)
-                        .build(),
-                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withDriverName("org.postgresql.Driver")
-                        .withUrl("jdbc:postgresql://postgres:5432/default")
-                        .withUsername("dev_user")
-                        .withPassword("dev_pw")
-                        .build());
+                Constants.JDBC_EXECUTION_OPTIONS,
+                Constants.JDBC_CONNECTION_OPTIONS);
     }
 
 }

@@ -2,9 +2,11 @@ package at.fhv.streamprocessing.flink.job;
 
 import at.fhv.streamprocessing.flink.Constants;
 import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
+import at.fhv.streamprocessing.flink.function.aggregate.QualityCodeRecordCounter;
 import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
 import at.fhv.streamprocessing.flink.function.sink.PostgresAggregatedDataSink;
 import at.fhv.streamprocessing.flink.function.sink.PostgresLiveDataSink;
+import at.fhv.streamprocessing.flink.function.sink.PostgresQualityCodeSink;
 import at.fhv.streamprocessing.flink.function.window.WindowDoubleAndCountFunction;
 import at.fhv.streamprocessing.flink.record.*;
 import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunction;
@@ -52,7 +54,20 @@ public class DemoWeatherDataJob {
                 .name("postgres-temperature-live-data-sink");
         // live data end
 
-        // minibatched start
+        // minibatch aggregation quality code start
+        localizedNoaaRecords
+                .filter(NoaaRecord::isValidAirTemperature)
+                .map(r -> QualityCodeRecord.forTemperatureOfLocalizedNoaaRecord(r, 1))
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<QualityCodeRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
+                .keyBy(QualityCodeRecord::getKey)
+                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
+                .aggregate(new QualityCodeRecordCounter())
+                .addSink(PostgresQualityCodeSink.createSink())
+                .name("posgres-temperature-quality-code-sink");
+        // minibatch aggregation quality code end
+
+
+        // minibatch aggregation country start
         DataStream<SingleValueRecord> avgTempPerDayAndCountry = temperatureStream
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
                 .keyBy(SingleValueRecord::country)
@@ -63,7 +78,7 @@ public class DemoWeatherDataJob {
                 .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "AVG", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
                 .addSink(PostgresAggregatedDataSink.createSink())
                 .name("postgres-sink");
-        // minibatched end
+        // minibatch aggregation country end
 
 
 //        avgTempPerDayAndCountry
