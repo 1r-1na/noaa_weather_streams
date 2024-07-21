@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS quality_codes (
 
 CREATE TABLE IF NOT EXISTS live_values(
     wban                VARCHAR(5),
-    measurement_type    VARCHAR(255)
+    measurement_type    VARCHAR(255),
     code                CHAR(1),
     "value"             NUMERIC(16,2),
     timestamp           TIMESTAMP,
