@@ -1,5 +1,6 @@
 package at.fhv.streamprocessing.flink.function.process;
 
+import at.fhv.streamprocessing.flink.record.LiquidPrecipitation;
 import at.fhv.streamprocessing.flink.record.NoaaRecord;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
@@ -39,7 +40,29 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
 
             long date = parseDate(record);
 
-            collector.collect(new NoaaRecord(year, airTemperature, isValidAirTemperature, airTemperatureQualityCode, windSpeedRate, isValidWindSpeedRate, windSpeedRateQualityCode, windTypeCode, latitude, longitude, wban, date));
+            boolean isValidPressure = !record.startsWith("99999", 99);
+            double pressure = parsePressure(record);
+            String pressureQualityCode = parsePressureQualityCode(record);
+
+            LiquidPrecipitation liquidPrecipitation = parseLiquidPrecipitation(record);
+
+            collector.collect(new NoaaRecord(year
+                    , airTemperature
+                    , isValidAirTemperature
+                    , airTemperatureQualityCode
+                    , windSpeedRate
+                    , isValidWindSpeedRate
+                    , windSpeedRateQualityCode
+                    , windTypeCode
+                    , latitude
+                    , longitude
+                    , wban
+                    , date
+                    , isValidPressure
+                    , pressure
+                    , pressureQualityCode
+                    , liquidPrecipitation
+            ));
         } catch (Exception e) {
             LOG.error("Could not parse {} char long Record {}", record.length(), record, e);
         }
@@ -83,9 +106,37 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
     }
 
     private long parseDate(String record) {
-        String dateString = record.substring(15,27);
+        String dateString = record.substring(15, 27);
         LocalDateTime ldt = LocalDateTime.parse(dateString, NOAA_TIMESTAMP_FORMAT);
         return ldt.toInstant(ZoneOffset.UTC).toEpochMilli();
+    }
+
+    private double parsePressure(String record) {
+        return Double.parseDouble(record.substring(99, 104)) / 10;
+    }
+
+    private String parsePressureQualityCode(String record) {
+        return record.substring(104, 105);
+    }
+
+    private LiquidPrecipitation parseLiquidPrecipitation(String record) {
+        int liquidPrecipitationRecordIndex = record.lastIndexOf("AA1");
+        if (liquidPrecipitationRecordIndex == -1) {
+            // invalid with quality code = MISSING
+            return new LiquidPrecipitation("9");
+        }
+
+        String liquidPrecipitationRecord = record.substring(liquidPrecipitationRecordIndex + 3);
+        String qualityCode = liquidPrecipitationRecord.substring(7, 8);
+        if (liquidPrecipitationRecord.startsWith("99") || liquidPrecipitationRecord.startsWith("9999", 2)) {
+            // invalid but parse real quality code
+            return new LiquidPrecipitation(qualityCode);
+        }
+
+        int liquidPrecipitationHours = Integer.parseInt(liquidPrecipitationRecord.substring(0, 2));
+        double liquidPrecipitationDepth = Double.parseDouble(liquidPrecipitationRecord.substring(2, 6)) / 10;
+        // valid
+        return new LiquidPrecipitation(liquidPrecipitationHours, liquidPrecipitationDepth, qualityCode);
     }
 
 }
