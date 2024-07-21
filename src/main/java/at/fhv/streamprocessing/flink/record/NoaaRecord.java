@@ -14,7 +14,6 @@ public class NoaaRecord {
     final String windTypeCode;
     final String latitude;
     final String longitude;
-    private String countryCode;
     private final String wban;
     private final long timestamp;
 
