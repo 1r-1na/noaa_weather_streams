@@ -1,6 +1,7 @@
 package at.fhv.streamprocessing.flink.util;
 
 import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
+import at.fhv.streamprocessing.flink.function.aggregate.CountAggregate;
 import at.fhv.streamprocessing.flink.function.aggregate.MaxAggregate;
 import at.fhv.streamprocessing.flink.function.aggregate.MinAggregate;
 import at.fhv.streamprocessing.flink.record.AggregatedDataRecord;
@@ -12,7 +13,8 @@ public enum AggregationType {
 
     AVG("AVG", AverageAggregate::new),
     MIN("MIN", MinAggregate::new),
-    MAX("MAX", MaxAggregate::new);
+    MAX("MAX", MaxAggregate::new),
+    COUNT("COUNT",CountAggregate::new);
 
 
     private final String typeId;
