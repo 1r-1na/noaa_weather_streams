@@ -55,6 +55,10 @@ public class AggregatedDataRecord {
         return durationDays;
     }
 
+    public String getKey() {
+        return country;
+    }
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);

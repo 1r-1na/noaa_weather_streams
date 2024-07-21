@@ -1,28 +1,25 @@
 package at.fhv.streamprocessing.flink.job;
 
 import at.fhv.streamprocessing.flink.Constants;
-import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
-import at.fhv.streamprocessing.flink.function.aggregate.MaxAggregate;
-import at.fhv.streamprocessing.flink.function.aggregate.MinAggregate;
 import at.fhv.streamprocessing.flink.function.aggregate.QualityCodeRecordCounter;
 import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
 import at.fhv.streamprocessing.flink.function.sink.PostgresAggregatedDataSink;
 import at.fhv.streamprocessing.flink.function.sink.PostgresLiveDataSink;
 import at.fhv.streamprocessing.flink.function.sink.PostgresQualityCodeSink;
-import at.fhv.streamprocessing.flink.function.window.WindowDoubleAndCountFunction;
 import at.fhv.streamprocessing.flink.record.*;
 import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunction;
 import at.fhv.streamprocessing.flink.function.source.FtpDataSource;
 import at.fhv.streamprocessing.flink.function.source.MlidDataSource;
+import at.fhv.streamprocessing.flink.util.AggregationType;
+import at.fhv.streamprocessing.flink.util.TimeWindows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 
-import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 
 public class DemoWeatherDataJob {
 
@@ -44,70 +41,53 @@ public class DemoWeatherDataJob {
                 .connect(mlidStream)
                 .process(new NoaaMildBroadcastProcessFunction());
 
-        DataStream<SingleValueRecord> temperatureStream = localizedNoaaRecords
-                .filter(NoaaRecord::isValidAirTemperature)
-                .map(r -> new SingleValueRecord(r.airTemperature(), r.country(), r.timestamp()));
 
         // live data start
         localizedNoaaRecords
                 .filter(NoaaRecord::isValidAirTemperature)
-                .map(r -> new LiveDataRecord(r.wban(), "TEMPERATURE", r.airTemperatureQualityCode().charAt(0), r.airTemperature(), Instant.ofEpochMilli(r.timestamp()), r.latitude(), r.longitude(), r.country()))
+                .map(r -> new LiveDataRecord(r.wban(), Constants.MEASUREMENT_TYPE_TEMPERATURE, r.airTemperatureQualityCode().charAt(0), r.airTemperature(), Instant.ofEpochMilli(r.timestamp()), r.latitude(), r.longitude(), r.country()))
                 .addSink(PostgresLiveDataSink.createSink())
                 .name("postgres-temperature-live-data-sink");
         // live data end
 
-        // minibatch aggregation quality code start
-        localizedNoaaRecords
-                .filter(NoaaRecord::isValidAirTemperature)
-                .map(r -> QualityCodeRecord.forTemperatureOfLocalizedNoaaRecord(r, 1))
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<QualityCodeRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
-                .keyBy(QualityCodeRecord::getKey)
-                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
-                .aggregate(new QualityCodeRecordCounter())
-                .addSink(PostgresQualityCodeSink.createSink())
-                .name("posgres-temperature-quality-code-sink");
-        // minibatch aggregation quality code end
+
+        Arrays.stream(TimeWindows.values()).forEach(timeWindow -> {
+
+            // minibatch aggregation quality code start
+            localizedNoaaRecords
+                    .filter(NoaaRecord::isValidAirTemperature)
+                    .map(r -> QualityCodeRecord.forTemperatureOfLocalizedNoaaRecord(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())))
+                    .assignTimestampsAndWatermarks(WatermarkStrategy.<QualityCodeRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
+                    .keyBy(QualityCodeRecord::getKey)
+                    .window(timeWindow.windowAssigner())
+                    .aggregate(new QualityCodeRecordCounter())
+                    .addSink(PostgresQualityCodeSink.createSink())
+                    .name("postgres-temperature-quality-code-" + timeWindow.typeId() + "-sink");
+            // minibatch aggregation quality code end
 
 
-        // minibatch aggregation country start
-        DataStream<SingleValueRecord> avgTempPerDayAndCountry = temperatureStream
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
-                .keyBy(SingleValueRecord::country)
-                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
-                .aggregate(new AverageAggregate(), new WindowDoubleAndCountFunction());
+            // minibatch aggregation country start
 
-        avgTempPerDayAndCountry
-                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "AVG", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
-                .addSink(PostgresAggregatedDataSink.createSink())
-                .name("postgres-sink");
-        // minibatch aggregation country end
+            Arrays.stream(AggregationType.values()).forEach(type -> {
 
+                DataStream<AggregatedDataRecord> temperatureStream = localizedNoaaRecords
+                        .filter(NoaaRecord::isValidAirTemperature)
+                        .map(r -> AggregatedDataRecord.forTemperatureOfLocalizedNoaaRecord(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())));
 
-//        avgTempPerDayAndCountry
-//                .addSink(new GenericLoggingSink<>("joined-data"))
-//                .name("joined-data-sink");
+                temperatureStream
+                        .assignTimestampsAndWatermarks(WatermarkStrategy.<AggregatedDataRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
+                        .keyBy(AggregatedDataRecord::getKey)
+                        .window(timeWindow.windowAssigner())
+                        .aggregate(type.aggregateFunction())
+                        .addSink(PostgresAggregatedDataSink.createSink())
+                        .name("postgres-temperature-" + type.getTypeId() + "-" + timeWindow.typeId() + "-sink");
 
-        DataStream<SingleValueRecord> maxTempPerDayAndCountry = temperatureStream
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
-                .keyBy(SingleValueRecord::country)
-                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
-                .aggregate(new MaxAggregate(), new WindowDoubleAndCountFunction());
+            });
 
-        maxTempPerDayAndCountry
-                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MAX", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
-                .addSink(PostgresAggregatedDataSink.createSink())
-                .name("postgres-sink");
+            // minibatch aggregation country end
 
-        DataStream<SingleValueRecord> minTempPerDayAndCountry = temperatureStream
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
-                .keyBy(SingleValueRecord::country)
-                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
-                .aggregate(new MinAggregate(), new WindowDoubleAndCountFunction());
+        });
 
-        minTempPerDayAndCountry
-                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MIN", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
-                .addSink(PostgresAggregatedDataSink.createSink())
-                .name("postgres-sink");
 
         env.execute("weather-data-demo-job");
     }

@@ -9,12 +9,15 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class FtpDataSource implements SourceFunction<String>, Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(FtpDataSource.class);
+
+    private final static int AMOUNT_OF_FILES_TO_MONITOR = 50;
 
     private final static String SERVER_IP = "ftp2.ncdc.noaa.gov";
     private final static int SERVER_PORT = 21;
@@ -44,7 +47,7 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
         Collections.shuffle(availableFiles);
 
         monitoredFiles = availableFiles
-                .subList(0, 50)
+                .subList(0, AMOUNT_OF_FILES_TO_MONITOR)
                 .stream()
                 .collect(Collectors.toMap(Function.identity(), (name) -> new Tuple2<>(0L, 0)));
 
@@ -60,6 +63,7 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
         LOG.info("Looking for changes in monitored files...");
 
         LinkedList<String> recordsToSend = new LinkedList<>();
+        AtomicInteger fileDebugTracker = new AtomicInteger(0);
 
         FileReadingFtpClient ftpClient = FileReadingFtpClient.newInstance(SERVER_IP, SERVER_PORT, USERNAME, PASSWORD);
         ftpClient.changeDir(FILE_PATH);
@@ -81,7 +85,7 @@ public class FtpDataSource implements SourceFunction<String>, Serializable {
                         recordsToSend.addAll(unreadLines);
 
                         monitoredFiles.put(fileName, new Tuple2<>(newLastChangeTs, lines.size()));
-                        LOG.info("Received {} new lines of file {}", lines.size() - previousReadLines,  fileName);
+                        LOG.info("Received {} new lines of file {} [{}/{}]", lines.size() - previousReadLines,  fileName, fileDebugTracker.incrementAndGet(), AMOUNT_OF_FILES_TO_MONITOR);
 
                     } catch (Exception e) {
                         LOG.error("Failed to load File {}", nameAndTs.f0, e);
