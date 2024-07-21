@@ -1,19 +1,16 @@
 package at.fhv.streamprocessing.flink.job;
 
 import at.fhv.streamprocessing.flink.Constants;
-import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
-import at.fhv.streamprocessing.flink.function.aggregate.MaxAggregate;
-import at.fhv.streamprocessing.flink.function.aggregate.MinAggregate;
 import at.fhv.streamprocessing.flink.function.aggregate.QualityCodeRecordCounter;
 import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
 import at.fhv.streamprocessing.flink.function.sink.PostgresAggregatedDataSink;
 import at.fhv.streamprocessing.flink.function.sink.PostgresLiveDataSink;
 import at.fhv.streamprocessing.flink.function.sink.PostgresQualityCodeSink;
-import at.fhv.streamprocessing.flink.function.window.WindowDoubleAndCountFunction;
 import at.fhv.streamprocessing.flink.record.*;
 import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunction;
 import at.fhv.streamprocessing.flink.function.source.FtpDataSource;
 import at.fhv.streamprocessing.flink.function.source.MlidDataSource;
+import at.fhv.streamprocessing.flink.util.AggregationType;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
@@ -44,9 +41,6 @@ public class DemoWeatherDataJob {
                 .connect(mlidStream)
                 .process(new NoaaMildBroadcastProcessFunction());
 
-        DataStream<SingleValueRecord> temperatureStream = localizedNoaaRecords
-                .filter(NoaaRecord::isValidAirTemperature)
-                .map(r -> new SingleValueRecord(r.airTemperature(), r.country(), r.timestamp()));
 
         // live data start
         localizedNoaaRecords
@@ -70,14 +64,15 @@ public class DemoWeatherDataJob {
 
 
         // minibatch aggregation country start
-        DataStream<SingleValueRecord> avgTempPerDayAndCountry = temperatureStream
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
-                .keyBy(SingleValueRecord::country)
-                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
-                .aggregate(new AverageAggregate(), new WindowDoubleAndCountFunction());
+        DataStream<AggregatedDataRecord> temperatureStream = localizedNoaaRecords
+                .filter(NoaaRecord::isValidAirTemperature)
+                .map(r -> AggregatedDataRecord.forTemperatureOfLocalizedNoaaRecord(r, 1));
 
-        avgTempPerDayAndCountry
-                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "AVG", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
+        temperatureStream
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<AggregatedDataRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
+                .keyBy(AggregatedDataRecord::getKey)
+                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
+                .aggregate(AggregationType.AVG.aggregateFunction())
                 .addSink(PostgresAggregatedDataSink.createSink())
                 .name("postgres-sink");
         // minibatch aggregation country end
@@ -86,28 +81,28 @@ public class DemoWeatherDataJob {
 //        avgTempPerDayAndCountry
 //                .addSink(new GenericLoggingSink<>("joined-data"))
 //                .name("joined-data-sink");
-
-        DataStream<SingleValueRecord> maxTempPerDayAndCountry = temperatureStream
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
-                .keyBy(SingleValueRecord::country)
-                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
-                .aggregate(new MaxAggregate(), new WindowDoubleAndCountFunction());
-
-        maxTempPerDayAndCountry
-                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MAX", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
-                .addSink(PostgresAggregatedDataSink.createSink())
-                .name("postgres-sink");
-
-        DataStream<SingleValueRecord> minTempPerDayAndCountry = temperatureStream
-                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
-                .keyBy(SingleValueRecord::country)
-                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
-                .aggregate(new MinAggregate(), new WindowDoubleAndCountFunction());
-
-        minTempPerDayAndCountry
-                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MIN", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
-                .addSink(PostgresAggregatedDataSink.createSink())
-                .name("postgres-sink");
+//
+//        DataStream<SingleValueRecord> maxTempPerDayAndCountry = temperatureStream
+//                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
+//                .keyBy(SingleValueRecord::country)
+//                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
+//                .aggregate(new MaxAggregate(), new WindowDoubleAndCountFunction());
+//
+//        maxTempPerDayAndCountry
+//                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MAX", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
+//                .addSink(PostgresAggregatedDataSink.createSink())
+//                .name("postgres-sink");
+//
+//        DataStream<SingleValueRecord> minTempPerDayAndCountry = temperatureStream
+//                .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
+//                .keyBy(SingleValueRecord::country)
+//                .window(TumblingEventTimeWindows.of(Duration.ofDays(1)))
+//                .aggregate(new MinAggregate(), new WindowDoubleAndCountFunction());
+//
+//        minTempPerDayAndCountry
+//                .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "MIN", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
+//                .addSink(PostgresAggregatedDataSink.createSink())
+//                .name("postgres-sink");
 
         env.execute("weather-data-demo-job");
     }
