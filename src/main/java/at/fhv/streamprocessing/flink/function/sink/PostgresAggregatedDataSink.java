@@ -17,7 +17,6 @@ public class PostgresAggregatedDataSink {
     public static SinkFunction<AggregatedDataRecord> createSink() {
         String insertStatement = "INSERT INTO public.aggregated_data (country, measurement_type, aggregation_type, value, start_ts, duration_days) VALUES (?, ?, ?, ?, ?, ?);";
         return JdbcSink.sink(insertStatement, (ps, record) -> {
-                    LOG.info("A");
                     ps.setString(1, record.country());
                     ps.setString(2, record.measurementType());
                     ps.setString(3, record.aggregationType());

@@ -31,6 +31,7 @@ public class LiveDataRecord {
         this.timestamp = timestamp;
         this.lat = lat;
         this.lon = lon;
+        this.country = country;
     }
 
     public String wban() {

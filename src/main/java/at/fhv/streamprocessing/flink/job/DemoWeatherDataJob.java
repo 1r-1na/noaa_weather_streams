@@ -4,6 +4,7 @@ import at.fhv.streamprocessing.flink.Constants;
 import at.fhv.streamprocessing.flink.function.aggregate.AverageAggregate;
 import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
 import at.fhv.streamprocessing.flink.function.sink.PostgresAggregatedDataSink;
+import at.fhv.streamprocessing.flink.function.sink.PostgresLiveDataSink;
 import at.fhv.streamprocessing.flink.function.window.WindowDoubleAndCountFunction;
 import at.fhv.streamprocessing.flink.record.*;
 import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunction;
@@ -43,6 +44,15 @@ public class DemoWeatherDataJob {
                 .filter(NoaaRecord::isValidAirTemperature)
                 .map(r -> new SingleValueRecord(r.airTemperature(), r.country(), r.timestamp()));
 
+        // live data start
+        localizedNoaaRecords
+                .filter(NoaaRecord::isValidAirTemperature)
+                .map(r -> new LiveDataRecord(r.wban(), "TEMPERATURE", r.airTemperatureQualityCode().charAt(0), r.airTemperature(), Instant.ofEpochMilli(r.timestamp()), r.latitude(), r.longitude(), r.country()))
+                .addSink(PostgresLiveDataSink.createSink())
+                .name("postgres-temperature-live-data-sink");
+        // live data end
+
+        // minibatched start
         DataStream<SingleValueRecord> avgTempPerDayAndCountry = temperatureStream
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<SingleValueRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.timestamp()))
                 .keyBy(SingleValueRecord::country)
@@ -53,6 +63,8 @@ public class DemoWeatherDataJob {
                 .map(r -> new AggregatedDataRecord(r.country(), "TEMPERATURE", "AVG", r.value(), Instant.ofEpochMilli(r.timestamp()), 1))
                 .addSink(PostgresAggregatedDataSink.createSink())
                 .name("postgres-sink");
+        // minibatched end
+
 
 //        avgTempPerDayAndCountry
 //                .addSink(new GenericLoggingSink<>("joined-data"))

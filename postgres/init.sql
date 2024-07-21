@@ -25,5 +25,6 @@ CREATE TABLE IF NOT EXISTS live_values(
     timestamp           TIMESTAMP,
     lat                 VARCHAR(255),
     lon                 VARCHAR(255),
+    country             VARCHAR(255),
     PRIMARY KEY(wban, measurement_type)
 );

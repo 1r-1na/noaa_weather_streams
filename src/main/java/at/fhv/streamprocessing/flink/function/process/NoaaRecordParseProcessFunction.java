@@ -17,7 +17,6 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
 
 
     private static final long serialVersionUID = 1L;
-    private static final double MISSING_VALUE = 999.9;
 
     @Override
     public void processElement(String record, KeyedProcessFunction<String, String, NoaaRecord>.Context context, Collector<NoaaRecord> collector) {
@@ -26,11 +25,11 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
             String year = parseYear(record);
 
             double airTemperature = parseAirTemperature(record);
-            boolean isValidAirTemperature = airTemperature != MISSING_VALUE;
+            boolean isValidAirTemperature = !record.startsWith("+9999", 87);
             String airTemperatureQualityCode = parseAirTemperatureQualityCode(record);
 
             double windSpeedRate = parseWindSpeedRate(record);
-            boolean isValidWindSpeedRate = windSpeedRate != MISSING_VALUE;
+            boolean isValidWindSpeedRate = !record.startsWith("9999", 65);
             String windSpeedRateQualityCode = parseWindSpeedRateQualityCode(record);
             String windTypeCode = parseWindTypeCode(record);
 
@@ -72,11 +71,11 @@ public class NoaaRecordParseProcessFunction extends KeyedProcessFunction<String,
     }
 
     private String parseLatitude(String record) {
-        return record.substring(29, 35);
+        return String.valueOf(Double.parseDouble(record.substring(28, 34)) / 1000);
     }
 
     private String parseLongitude(String record) {
-        return record.substring(35, 42);
+        return String.valueOf(Double.parseDouble(record.substring(34, 41)) / 1000);
     }
 
     private String parseWban(String record) {
