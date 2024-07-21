@@ -16,9 +16,21 @@ public class NoaaRecord {
     final String longitude;
     private final String wban;
     private final long timestamp;
+    private final boolean isPressureValid;
+    private final double pressure; // Pressure relative to sea level.
+    private final String pressureQualityCode;
+    private final LiquidPrecipitation liquidPrecipitation;
 
 
-    public NoaaRecord(String year, double airTemperature, boolean isValidAirTemperature, String airTemperatureQualityCode, double windSpeedRate, boolean isValidWindSpeedRate, String windSpeedRateQualityCode, String windTypeCode, String latitude, String longitude, String wban, long timestamp) {
+    public NoaaRecord(String year, double airTemperature, boolean isValidAirTemperature, String airTemperatureQualityCode
+            , double windSpeedRate, boolean isValidWindSpeedRate, String windSpeedRateQualityCode, String windTypeCode
+            , String latitude, String longitude, String wban
+            , long timestamp
+            , boolean isPressureValid
+            , double pressure
+            , String pressureQualityCode
+            , LiquidPrecipitation liquidPrecipitation
+    ) {
         this.year = year;
         this.airTemperature = airTemperature;
         this.isValidAirTemperature = isValidAirTemperature;
@@ -31,6 +43,10 @@ public class NoaaRecord {
         this.longitude = longitude;
         this.timestamp = timestamp;
         this.wban = wban;
+        this.isPressureValid = isPressureValid;
+        this.pressure = pressure;
+        this.pressureQualityCode = pressureQualityCode;
+        this.liquidPrecipitation = liquidPrecipitation;
     }
 
     public String year() {
@@ -81,6 +97,21 @@ public class NoaaRecord {
         return wban;
     }
 
+    public double pressure() {
+        return pressure;
+    }
+
+    public boolean isPressureValid() {
+        return isPressureValid;
+    }
+
+    public String pressureQualityCode() {
+        return pressureQualityCode;
+    }
+
+    public LiquidPrecipitation liquidPrecipitation() {
+        return liquidPrecipitation;
+    }
 
     @Override
     public String toString() {
