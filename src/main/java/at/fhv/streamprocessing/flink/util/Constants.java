@@ -1,4 +1,4 @@
-package at.fhv.streamprocessing.flink;
+package at.fhv.streamprocessing.flink.util;
 
 import at.fhv.streamprocessing.flink.record.MlidRecord;
 import org.apache.flink.api.common.state.MapStateDescriptor;

@@ -1,6 +1,6 @@
 package at.fhv.streamprocessing.flink.function.sink;
 
-import at.fhv.streamprocessing.flink.Constants;
+import at.fhv.streamprocessing.flink.util.Constants;
 import at.fhv.streamprocessing.flink.record.QualityCodeRecord;
 import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;

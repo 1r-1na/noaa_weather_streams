@@ -4,7 +4,7 @@ docker compose up -d
 $FileName = "noaa_weather_streams-1.0-SNAPSHOT.jar"
 $JobManagerContainerId  = "noaa_weather_streams-jobmanager-1"
 $TaskManagerJobId = "noaa_weather_streams-taskmanager-1"
-$MainClassPath = "at.fhv.streamprocessing.flink.job.DemoWeatherDataJob"
+$MainClassPath = "at.fhv.streamprocessing.flink.WeatherDataJob"
 
 
 # use maven to build the app (create a persistent volume to cache dependencies)

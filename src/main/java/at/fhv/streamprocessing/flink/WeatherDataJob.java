@@ -1,6 +1,5 @@
-package at.fhv.streamprocessing.flink.job;
+package at.fhv.streamprocessing.flink;
 
-import at.fhv.streamprocessing.flink.Constants;
 import at.fhv.streamprocessing.flink.function.aggregate.QualityCodeRecordCounter;
 import at.fhv.streamprocessing.flink.function.process.NoaaMildBroadcastProcessFunction;
 import at.fhv.streamprocessing.flink.function.sink.PostgresAggregatedDataSink;
@@ -11,6 +10,7 @@ import at.fhv.streamprocessing.flink.function.process.NoaaRecordParseProcessFunc
 import at.fhv.streamprocessing.flink.function.source.FtpDataSource;
 import at.fhv.streamprocessing.flink.function.source.MlidDataSource;
 import at.fhv.streamprocessing.flink.util.AggregationType;
+import at.fhv.streamprocessing.flink.util.Constants;
 import at.fhv.streamprocessing.flink.util.MeasurementTypes;
 import at.fhv.streamprocessing.flink.util.TimeWindows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -21,7 +21,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.util.Arrays;
 
-public class DemoWeatherDataJob {
+public class WeatherDataJob {
 
     public static void main(String[] args) throws Exception {
 
@@ -68,21 +68,15 @@ public class DemoWeatherDataJob {
 
 
                 // minibatch aggregation country start
-
-                Arrays.stream(AggregationType.values()).forEach(aggregationType -> {
-
-                    localizedNoaaRecords
-                            .filter(measurementType::filter)
-                            .map(r -> measurementType.noaaToAggregated(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())))
-                            .assignTimestampsAndWatermarks(WatermarkStrategy.<AggregatedDataRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
-                            .keyBy(AggregatedDataRecord::getKey)
-                            .window(timeWindow.windowAssigner())
-                            .aggregate(aggregationType.aggregateFunction())
-                            .addSink(PostgresAggregatedDataSink.createSink())
-                            .name("postgres-" + measurementType.measurementTypeId() + "-" + aggregationType.getTypeId() + "-" + timeWindow.typeId() + "-sink");
-
-                });
-
+                Arrays.stream(AggregationType.values()).forEach(aggregationType -> localizedNoaaRecords
+                        .filter(measurementType::filter)
+                        .map(r -> measurementType.noaaToAggregated(r, timeWindow.daysOfWindowByTimestamp(r.timestamp())))
+                        .assignTimestampsAndWatermarks(WatermarkStrategy.<AggregatedDataRecord>forMonotonousTimestamps().withTimestampAssigner((e, ts) -> e.startTs().toEpochMilli()))
+                        .keyBy(AggregatedDataRecord::getKey)
+                        .window(timeWindow.windowAssigner())
+                        .aggregate(aggregationType.aggregateFunction())
+                        .addSink(PostgresAggregatedDataSink.createSink())
+                        .name("postgres-" + measurementType.measurementTypeId() + "-" + aggregationType.getTypeId() + "-" + timeWindow.typeId() + "-sink"));
                 // minibatch aggregation country end
 
             });
