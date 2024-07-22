@@ -10,9 +10,10 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir psycopg2-binary
 RUN pip install --no-cache-dir pandas plotly
+RUN pip install --no-cache-dir dash
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
+# Make port 8050 available to the world outside this container
+EXPOSE 8050
 
 # Run app.py when the container launches
 CMD ["python", "-u", "main.py"]

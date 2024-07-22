@@ -7,6 +7,7 @@ import threading
 import time
 from decimal import Decimal
 import datetime
+from dash import Dash, html, dcc
 
 # Database connection parameters
 db_params = {
@@ -16,6 +17,12 @@ db_params = {
     'host': 'postgres',
     'port': '5432'
 }
+
+app = Dash()
+app.layout = [
+    html.Div(children='My First App with Data and a Graph')
+]
+
 
 def fetch_countries(connection):
     q = "select distinct country from aggregated_data;"
@@ -32,10 +39,10 @@ def fetch_countries(connection):
         cursor.close()
         return None
 
+
 def fetch_data(connection, query):
     try:
         cursor = connection.cursor()
-        #cursor.mogrify(query)
         cursor.execute(query)
         result = cursor.fetchall()
         if result:
@@ -46,19 +53,31 @@ def fetch_data(connection, query):
         cursor.close()
         return None
 
+
 def update_plot(connection):
     countries = fetch_countries(connection)
 
     if countries:
         for country in countries:
-            # because its a tuple
+            # because it's a tuple
             c = country[0]
             q = f"select aggregation_type, start_ts, value from aggregated_data where country = '{c}' and measurement_type = 'TEMPERATURE' order by start_ts;"
             data = fetch_data(connection, q)
             if data:
                 df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
                 fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Temperature per day in {c}")
-                fig.show()
+                app.layout = html.Div(children=[
+                    html.H1(children='Hello Dash'),
+
+                    html.Div(children='''
+                            Dash: A web application framework for Python.
+                        '''),
+
+                    dcc.Graph(
+                        id='example-graph',
+                        figure=fig
+                    )
+                ])
 
 
 def listen_notifications(callback):
@@ -83,3 +102,4 @@ def listen_notifications(callback):
 if __name__ == "__main__":
     listener_thread = threading.Thread(target=listen_notifications, args=(update_plot,))
     listener_thread.start()
+    app.run(debug=True)
