@@ -9,6 +9,7 @@ COPY . /app
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir psycopg2-binary
+RUN pip install --no-cache-dir pandas plotly
 
 # Make port 80 available to the world outside this container
 EXPOSE 80
