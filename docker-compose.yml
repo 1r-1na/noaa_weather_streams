@@ -38,3 +38,10 @@ services:
       POSTGRES_DB: default
     volumes:
       - ./postgres:/docker-entrypoint-initdb.d
+
+  python_dashboard:
+    build:
+      context: ./noaa_dashboards
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres

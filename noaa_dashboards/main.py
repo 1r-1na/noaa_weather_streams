@@ -9,8 +9,8 @@ db_params = {
     'dbname': 'default',
     'user': 'dev_user',
     'password': 'dev_pw',
-    'host': 'localhost',
-    'port': '54321'
+    'host': 'postgres',
+    'port': '5432'
 }
 
 
@@ -22,7 +22,6 @@ def listen_notifications(callback):
     conn = psycopg2.connect(**db_params)
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = conn.cursor()
-    cursor.execute()
     cursor.execute("LISTEN custom_channel;")
     print("Listening for notifications on channel 'custom_channel'...")
 
