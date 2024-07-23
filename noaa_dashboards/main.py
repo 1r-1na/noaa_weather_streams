@@ -102,4 +102,4 @@ def listen_notifications(callback):
 if __name__ == "__main__":
     listener_thread = threading.Thread(target=listen_notifications, args=(update_plot,))
     listener_thread.start()
-    app.run(debug=True)
+    app.run_server(host="0.0.0.0", port=8050)
