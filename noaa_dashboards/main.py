@@ -117,6 +117,20 @@ def create_boxplot(connection, country, measurement_type, measurement_name):
             ]))
 
 
+def create_linediagram_live_values(connection, country):
+    q = f"SELECT measurement_type, timestamp, value FROM live_values WHERE country = '{country}' ORDER BY measurement_type, timestamp;"
+    data = fetch_data(connection, q)
+    if data:
+        df = pd.DataFrame(data, columns=['Measurement Type', 'Timestamp', 'Value'])
+        fig = px.line(df, x="Timestamp", y="Value", color='Measurement Type', title=f"Live values in {country}")
+        layout.append(html.Div(children=[
+            dcc.Graph(
+                id=f'{country}-LiveValues',
+                figure=fig
+            )
+        ]))
+
+            
 def update_plot(connection):
     countries = fetch_countries(connection)
 
@@ -128,6 +142,7 @@ def update_plot(connection):
             for i in range(count):
                 create_linediagram(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
                 create_boxplot(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
+            create_linediagram_live_values(connection, c)
 
 
 def listen_notifications(callback):
