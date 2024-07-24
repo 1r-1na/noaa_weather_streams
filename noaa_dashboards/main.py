@@ -5,8 +5,6 @@ import plotly.express as px
 import select
 import threading
 import time
-from decimal import Decimal
-import datetime
 from dash import Dash, html, dcc
 
 # Database connection parameters
@@ -18,10 +16,12 @@ db_params = {
     'port': '5432'
 }
 
+
 app = Dash()
-app.layout = [
-    html.Div(children='My First App with Data and a Graph')
+layout = [
+    html.Div(children='NOAA weather dashboards with FLINK')
 ]
+app.layout = layout
 
 
 def fetch_countries(connection):
@@ -30,7 +30,6 @@ def fetch_countries(connection):
         cursor = connection.cursor()
         cursor.execute(q)
         result = cursor.fetchall()
-        print(result)
         if result:
             return result
         return None
@@ -54,6 +53,62 @@ def fetch_data(connection, query):
         return None
 
 
+def create_linediagram_temperature(connection, country):
+    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'TEMPERATURE' AND aggregation_type IN ('AVG', 'MIN', 'MAX') ORDER BY start_ts;"
+    data = fetch_data(connection, q)
+    if data:
+        df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
+        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Temperature stats per day in {country}")
+        layout.append(html.Div(children=[
+            dcc.Graph(
+                id=f'{country}-LineDiagram-Temperature',
+                figure=fig
+            )
+        ]))
+
+
+def create_linediagram_wind(connection, country):
+    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'WIND' AND aggregation_type IN ('AVG', 'MIN', 'MAX') ORDER BY start_ts;"
+    data = fetch_data(connection, q)
+    if data:
+        df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
+        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Wind stats per day in {country}")
+        layout.append(html.Div(children=[
+            dcc.Graph(
+                id=f'{country}-LineDiagram-Wind',
+                figure=fig
+            )
+        ]))
+
+
+def create_linediagram_pressure(connection, country):
+    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'ATMOSPHERIC_PRESSURE' AND aggregation_type IN ('AVG', 'MIN', 'MAX') ORDER BY start_ts;"
+    data = fetch_data(connection, q)
+    if data:
+        df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
+        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Atmospheric Pressure stats per day in {country}")
+        layout.append(html.Div(children=[
+            dcc.Graph(
+                id=f'{country}-LineDiagram-Pressure',
+                figure=fig
+            )
+        ]))
+
+
+def create_linediagram_liquid_precipitation(connection, country):
+    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'LIQUID_PRECIPITATION' AND aggregation_type IN ('AVG', 'MIN', 'MAX') ORDER BY start_ts;"
+    data = fetch_data(connection, q)
+    if data:
+        df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
+        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Liquid precipitation stats per day in {country}")
+        layout.append(html.Div(children=[
+            dcc.Graph(
+                id=f'{country}-LineDiagram-Liquid-Precipitation',
+                figure=fig
+            )
+        ]))
+
+
 def update_plot(connection):
     countries = fetch_countries(connection)
 
@@ -61,23 +116,10 @@ def update_plot(connection):
         for country in countries:
             # because it's a tuple
             c = country[0]
-            q = f"select aggregation_type, start_ts, value from aggregated_data where country = '{c}' and measurement_type = 'TEMPERATURE' order by start_ts;"
-            data = fetch_data(connection, q)
-            if data:
-                df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
-                fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Temperature per day in {c}")
-                app.layout = html.Div(children=[
-                    html.H1(children='Hello Dash'),
-
-                    html.Div(children='''
-                            Dash: A web application framework for Python.
-                        '''),
-
-                    dcc.Graph(
-                        id='example-graph',
-                        figure=fig
-                    )
-                ])
+            create_linediagram_temperature(connection, c)
+            create_linediagram_wind(connection, c)
+            create_linediagram_pressure(connection, c)
+            create_linediagram_liquid_precipitation(connection, c)
 
 
 def listen_notifications(callback):
@@ -86,6 +128,9 @@ def listen_notifications(callback):
     cursor = conn.cursor()
     cursor.execute("LISTEN custom_channel;")
     print("Listening for notifications on channel 'custom_channel'...")
+
+    # initial call
+    callback(conn)
 
     while True:
         if select.select([conn], [], [], 5) == ([], [], []):
