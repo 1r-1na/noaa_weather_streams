@@ -13,7 +13,7 @@
 
 ## How To Run
 
-Wir stellen eine Docker-Compose Konfiguration zur Verfügung sowie ein Startup-Script `SubmitFlinkJob.ps1`, welches in folgender Reihenfolge:
+Wir stellen eine Docker-Compose Konfiguration zur Verfügung sowie ein Startup-Script `SubmitFlinkJob.ps1`, welches in folgender Reihenfolge folgendes Ausführt:
 1. Die bestehende Infrastruktur plättet
 2. Alle Container wieder startet
 3. Unser Job-Java-Projekt frisch buildet
