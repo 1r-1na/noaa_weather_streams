@@ -67,7 +67,8 @@ Nach dem Filtern der eingehenden Daten aggregieren wir sie, um diverse Kennwerte
 - pro Country
 - pro Zeitfenster (Tumbling Window)
 - pro Aggegationstyp statt.
-  In der Tabelle `aggregated_data` sind diese Daten einsehbar. `start_ts` gibt dabei die Erste Messung eines Zeitfensters an und mit `duration_days` wird angegeben, wie lange das Zeitfenster geht. Der `aggregation-type` gibt an, was berechnet wurde:
+
+In der Tabelle `aggregated_data` sind diese Daten einsehbar. `start_ts` gibt dabei die Erste Messung eines Zeitfensters an und mit `duration_days` wird angegeben, wie lange das Zeitfenster geht. Der `aggregation-type` gibt an, was berechnet wurde:
 - `COUNT`: Zählt die Anzahl der Einträge, über die aggregiert wurde. Damit können die Aggregationswerte in ein Verhältnis gesetzt werden
 - `AVG`: Mittelwertberechnung
 - `MIN`: Minimaler Wert
