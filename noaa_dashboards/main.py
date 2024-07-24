@@ -17,6 +17,22 @@ db_params = {
 }
 
 
+measurement_types_names = {
+    "types": [
+        'TEMPERATURE',
+        'WIND',
+        'ATMOSPHERIC_PRESSURE',
+        'LIQUID_PRECIPITATION'
+    ],
+    "names": [
+        'Temperature',
+        'Wind speed',
+        'Atmospheric pressure',
+        'Liquid precipitation'
+    ]
+}
+
+
 app = Dash()
 layout = [
     html.Div(children='NOAA weather dashboards with FLINK')
@@ -67,79 +83,38 @@ def fetch_one(connection, query):
         return None
 
 
-def create_linediagram_temperature(connection, country):
-    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'TEMPERATURE' AND aggregation_type IN ('AVG', 'MIN', 'MAX') AND duration_days = 1 ORDER BY start_ts;"
+def create_linediagram(connection, country, measurement_type, measurement_name):
+    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = '{measurement_type}' AND aggregation_type IN ('AVG', 'MIN', 'MAX') AND duration_days = 1 ORDER BY start_ts;"
     data = fetch_data(connection, q)
     if data:
         df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
-        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Temperature stats per day in {country}")
+        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"{measurement_name} stats per day in {country}")
         layout.append(html.Div(children=[
             dcc.Graph(
-                id=f'{country}-LineDiagram-Temperature',
+                id=f'{country}-LineDiagram-{measurement_type}',
                 figure=fig
             )
         ]))
 
 
-def create_linediagram_wind(connection, country):
-    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'WIND' AND aggregation_type IN ('AVG', 'MIN', 'MAX') AND duration_days = 1 ORDER BY start_ts;"
-    data = fetch_data(connection, q)
-    if data:
-        df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
-        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Wind speed stats per day in {country}")
-        layout.append(html.Div(children=[
-            dcc.Graph(
-                id=f'{country}-LineDiagram-Wind',
-                figure=fig
-            )
-        ]))
-
-
-def create_linediagram_pressure(connection, country):
-    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'ATMOSPHERIC_PRESSURE' AND aggregation_type IN ('AVG', 'MIN', 'MAX') AND duration_days = 1 ORDER BY start_ts;"
-    data = fetch_data(connection, q)
-    if data:
-        df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
-        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Atmospheric Pressure stats per day in {country}")
-        layout.append(html.Div(children=[
-            dcc.Graph(
-                id=f'{country}-LineDiagram-Pressure',
-                figure=fig
-            )
-        ]))
-
-
-def create_linediagram_liquid_precipitation(connection, country):
-    q = f"SELECT aggregation_type, start_ts, value FROM aggregated_data WHERE country = '{country}' AND measurement_type = 'LIQUID_PRECIPITATION' AND aggregation_type IN ('AVG', 'MIN', 'MAX') AND duration_days = 1 ORDER BY start_ts;"
-    data = fetch_data(connection, q)
-    if data:
-        df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
-        fig = px.line(df, x="Day", y="Value", color='AggType', title=f"Liquid precipitation stats per day in {country}")
-        layout.append(html.Div(children=[
-            dcc.Graph(
-                id=f'{country}-LineDiagram-Liquid-Precipitation',
-                figure=fig
-            )
-        ]))
-
-
-def create_boxplot_temperature(connection, country):
-    query_monthly_data = f"SELECT start_ts, duration_days FROM aggregated_data WHERE (duration_days = 28 OR duration_days = 29 OR duration_days = 30 OR duration_days = 31) AND country = '{country}' AND measurement_type = 'TEMPERATURE' AND aggregation_type NOT IN ('COUNT', 'STD', 'AVG');"
+def create_boxplot(connection, country, measurement_type, measurement_name):
+    query_monthly_data = f"SELECT start_ts, duration_days FROM aggregated_data WHERE (duration_days = 28 OR duration_days = 29 OR duration_days = 30 OR duration_days = 31) AND country = '{country}' AND measurement_type = '{measurement_type}' AND aggregation_type NOT IN ('COUNT', 'STD', 'AVG');"
     monthly_data = fetch_one(connection, query_monthly_data)
     if monthly_data:
         start_ts = monthly_data[0]
         duration_days = monthly_data[1]
-        query_one_boxplotdata = f"SELECT aggregation_type, value FROM aggregated_data WHERE measurement_type = 'TEMPERATURE' AND aggregation_type NOT IN ('COUNT', 'STD', 'AVG') AND country = '{country}' and start_ts = '{start_ts}' AND duration_days = {duration_days} ORDER BY aggregation_type;"
+        query_one_boxplotdata = f"SELECT aggregation_type, value FROM aggregated_data WHERE measurement_type = '{measurement_type}' AND aggregation_type NOT IN ('COUNT', 'STD', 'AVG') AND country = '{country}' and start_ts = '{start_ts}' AND duration_days = {duration_days} ORDER BY aggregation_type;"
         boxplotdata = fetch_data(connection, query_one_boxplotdata)
-        df = pd.DataFrame(boxplotdata, columns=['Month', 'Value'])
-        df.set_index('Month').loc[['MIN', 'WHISKER_L', 'Q1', 'MEDIAN', 'Q3', 'WHISKER_U', 'MAX']]
-        fig = px.box(df, y="Value", title=f"Temperature boxplot of one month starting at {start_ts} in {country}")
-        layout.append(html.Div(children=[
-            dcc.Graph(
-                id=f'{country}-BoxPlot-Temperature',
-                figure=fig
-            )
-        ]))
+        if boxplotdata:
+            df = pd.DataFrame(boxplotdata, columns=['Month', 'Value'])
+            df.set_index('Month').loc[['MIN', 'WHISKER_L', 'Q1', 'MEDIAN', 'Q3', 'WHISKER_U', 'MAX']]
+            fig = px.box(df, y="Value", title=f"{measurement_name} boxplot of one month starting at {start_ts} in {country}")
+            layout.append(html.Div(children=[
+                dcc.Graph(
+                    id=f'{country}-BoxPlot-{measurement_type}',
+                    figure=fig
+                )
+            ]))
 
 
 def update_plot(connection):
@@ -149,11 +124,10 @@ def update_plot(connection):
         for country in countries:
             # because it's a tuple
             c = country[0]
-            create_linediagram_temperature(connection, c)
-            create_linediagram_wind(connection, c)
-            create_linediagram_pressure(connection, c)
-            create_linediagram_liquid_precipitation(connection, c)
-            create_boxplot_temperature(connection, c)
+            count = len(measurement_types_names["types"])
+            for i in range(count):
+                create_linediagram(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
+                create_boxplot(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
 
 
 def listen_notifications(callback):
