@@ -1,5 +1,5 @@
 docker compose down
-docker compose up -d
+docker compose up -d --build python_dashboards
 
 $FileName = "noaa_weather_streams-1.0-SNAPSHOT.jar"
 $JobManagerContainerId  = "noaa_weather_streams-jobmanager-1"

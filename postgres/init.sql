@@ -29,3 +29,15 @@ CREATE TABLE IF NOT EXISTS live_values(
     country             VARCHAR(255),
     PRIMARY KEY(wban, measurement_type)
 );
+
+CREATE OR REPLACE FUNCTION notify_channel()
+RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM pg_notify('custom_channel', 'Data has changed.');
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER custom_trigger AFTER INSERT OR UPDATE OR DELETE ON aggregated_data EXECUTE PROCEDURE notify_channel();
+CREATE TRIGGER custom_trigger AFTER INSERT OR UPDATE OR DELETE ON live_values EXECUTE PROCEDURE notify_channel();
+CREATE TRIGGER custom_trigger AFTER INSERT OR UPDATE OR DELETE ON quality_codes EXECUTE PROCEDURE notify_channel();
