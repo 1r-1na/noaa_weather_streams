@@ -11,7 +11,7 @@
 
 ## How To Run
 
-Wir stellen eine Docker-Compose Konfiguration zur Verfügung sowie ein Startup-Script `SubmitFlinkJob.ps1`, welches in folgender Reihenfolge folgendes Ausführt:
+Wir stellen eine Docker-Compose Konfiguration zur Verfügung sowie ein Startup-Script [SubmitFlinkJob.ps1](./SubmitFlinkJob.ps1), welches in folgender Reihenfolge folgendes Ausführt:
 
 1. Die bestehende Infrastruktur plättet
 2. Alle Container wieder startet
@@ -24,7 +24,7 @@ Da wir sehr viel mit den Daten anstellen, braucht das initiale Verabeiten etwas 
 
 ### Speichern der Daten
 
-Unsere flinken Sink-Funktionen sind alles Postgres-Sinks, wir speichern unsere Daten in einer Postgres-Datenbank ab. Urspünglich war gedacht, dass wir direkt auf die Datastreams für die Visualisierung zugreifen, jedoch wurde dass schnell wieder verworfen besonders nachdem uns ChatGPT empfohlen hat, dass wir unsere Daten zuerst in Kafka schreiben, um sie dann dort auszulesen. https://chatgpt.com/share/85b3deae-f47f-4872-9713-2023108105cc
+Unsere flinken Sink-Funktionen sind alles Postgres-Sinks, wir speichern unsere Daten in einer Postgres-Datenbank ab. Urspünglich war gedacht, dass wir direkt auf die Datastreams für die Visualisierung zugreifen, jedoch wurde dass schnell wieder verworfen besonders nachdem uns ChatGPT empfohlen hat, dass wir unsere Daten zuerst in Kafka schreiben, um sie dann dort auszulesen. [Chat GPT Request - Flink Stream Boxplot Python](https://chatgpt.com/share/85b3deae-f47f-4872-9713-2023108105cc)
 
 ### Realtime Streaming
 
@@ -116,11 +116,11 @@ GROUP BY
 
 ## Dashboards
 
-Zusätzlich wurde eine Applikation in Python geschrieben, die ebenfalls im Docker gehostet wird und auf `localhost:8050` erreichbar ist.
+Zusätzlich wurde eine Applikation in Python geschrieben, die ebenfalls im Docker gehostet wird und auf `http://localhost:8050/` erreichbar ist.
 
 Zu sehen sind nur einige aggregierte Daten. Es ist möglich, dass die Darstellung aufgrund der verschiedenen Wertebereiche etwas rar oder falsch erscheint. Die Dashboards dienen nur zu einer flinken Übersicht, aufgrund dessen wurden die x- und y-Achsen nicht besser gehandhabt.
 
-Zu Beginn wird auf `localhost:8050` einfach eine Überschrift angezeigt. Nach und nach werden dann die Dashboards geladen. Für eine aktuellere Ansicht muss die Seite neu geladen werden bzw. ein neuer Request gesendet werden.
+Zu Beginn wird auf `http://localhost:8050/` einfach eine Überschrift angezeigt. Nach und nach werden dann die Dashboards geladen. Für eine aktuellere Ansicht muss die Seite neu geladen werden bzw. ein neuer Request gesendet werden.
 
 ![Dashboards Startseite](./resources/startsite.png)
 
