@@ -34,10 +34,9 @@ measurement_types_names = {
 
 
 app = Dash()
-layout = [
-    html.Div(children='NOAA weather dashboards with FLINK')
+app.layout = [
+    html.Div(children='NOAA weather dashboards with FLINK'),
 ]
-app.layout = layout
 
 
 def fetch_countries(connection):
@@ -89,12 +88,13 @@ def create_linediagram(connection, country, measurement_type, measurement_name):
     if data:
         df = pd.DataFrame(data, columns=['AggType', 'Day', 'Value'])
         fig = px.line(df, x="Day", y="Value", color='AggType', title=f"{measurement_name} stats per day in {country}")
-        layout.append(html.Div(children=[
+        
+        return html.Div(children=[
             dcc.Graph(
                 id=f'{country}-LineDiagram-{measurement_type}',
                 figure=fig
             )
-        ]))
+        ])
 
 
 def create_boxplot(connection, country, measurement_type, measurement_name):
@@ -109,12 +109,12 @@ def create_boxplot(connection, country, measurement_type, measurement_name):
             df = pd.DataFrame(boxplotdata, columns=['Month', 'Value'])
             df.set_index('Month').loc[['MIN', 'WHISKER_L', 'Q1', 'MEDIAN', 'Q3', 'WHISKER_U', 'MAX']]
             fig = px.box(df, y="Value", title=f"{measurement_name} boxplot of one month starting at {start_ts} in {country}")
-            layout.append(html.Div(children=[
+            return html.Div(children=[
                 dcc.Graph(
                     id=f'{country}-BoxPlot-{measurement_type}',
                     figure=fig
                 )
-            ]))
+            ])
 
 
 def create_linediagram_live_values(connection, country):
@@ -123,15 +123,18 @@ def create_linediagram_live_values(connection, country):
     if data:
         df = pd.DataFrame(data, columns=['Measurement Type', 'Timestamp', 'Value'])
         fig = px.line(df, x="Timestamp", y="Value", color='Measurement Type', title=f"Live values in {country}")
-        layout.append(html.Div(children=[
+        return html.Div(children=[
             dcc.Graph(
                 id=f'{country}-LiveValues',
                 figure=fig
             )
-        ]))
+        ])
 
             
 def update_plot(connection):
+    updated_layout = [
+        html.Div(children='NOAA weather dashboards with FLINK')
+    ]
     countries = fetch_countries(connection)
 
     if countries:
@@ -140,9 +143,17 @@ def update_plot(connection):
             c = country[0]
             count = len(measurement_types_names["types"])
             for i in range(count):
-                create_linediagram(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
-                create_boxplot(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
-            create_linediagram_live_values(connection, c)
+                div1 = create_linediagram(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
+                if div1:
+                    updated_layout.append(div1)
+                div2 = create_boxplot(connection, c, measurement_types_names["types"][i], measurement_types_names["names"][i])
+                if div2:
+                    updated_layout.append(div2)
+            div3 = create_linediagram_live_values(connection, c)
+            if div3:
+                updated_layout.append(div3)
+    
+    app.layout = updated_layout
 
 
 def listen_notifications(callback):
@@ -170,8 +181,8 @@ def listen_notifications(callback):
                 time.sleep(30)
                 continue
             conn.poll()
-            if conn.notifies:
-                notify = conn.notifies.pop()
+            while conn.notifies:
+                notify = conn.notifies.pop(0)
                 print("Got NOTIFY:", notify.payload)
                 callback(conn)
                 # sleep to not update too continuously

@@ -125,3 +125,7 @@ Zu Beginn wird auf `localhost:8050` einfach eine Überschrift angezeigt. Nach un
 ![Dashboards Startseite](./resources/startsite.png)
 
 Es kann gut sein, dass es einige Zeit dauert, bis alles geschmeidig funktioniert. Sollte es Probleme geben, sollte eventuell der Container `python_dashboards` neu gestartet werden. Gibt es gröbere Probleme, so kann es helfen, die `python_dashboards` aus der `docker-compose` Datei zu entfernen und im Skript "SubmitFlinkJob.ps1" Folgendes zu entfernen: `--build python_dashboards`. Dann das Skript noch mal ausführen. Im Nachhinein kann `python_dashboards` noch mal einzeln gestartet werden. Dafür einfach die `docker-compose` Datei zurücksetzen und `docker compose up -d --build` ausführen.
+
+Irgendwann sollte die Seite dem folgenden Bild ähneln.
+
+![Dashboards](./resources/dashboards.png)
