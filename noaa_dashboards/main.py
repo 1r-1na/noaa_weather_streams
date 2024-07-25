@@ -146,25 +146,36 @@ def update_plot(connection):
 
 
 def listen_notifications(callback):
-    conn = psycopg2.connect(**db_params)
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = conn.cursor()
-    cursor.execute("LISTEN custom_channel;")
-    print("Listening for notifications on channel 'custom_channel'...")
+    conn = None
+    for i in range(100):
+        try:
+            conn = psycopg2.connect(**db_params)
+            break
+        except:
+            print(i, "Connection refused...")
+            time.sleep(60)
 
-    # initial call
-    callback(conn)
+    if conn is not None:
+        conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = conn.cursor()
+        
+        # initial call
+        callback(conn)
 
-    while True:
-        if select.select([conn], [], [], 5) == ([], [], []):
-            continue
-        conn.poll()
-        while conn.notifies:
-            notify = conn.notifies.pop(0)
-            print("Got NOTIFY:", notify.payload)
-            callback(conn)
-            # sleep to not update too continuously
-            time.sleep(10)
+        cursor.execute("LISTEN custom_channel;")
+        print("Listening for notifications on channel 'custom_channel'...")
+
+        while True:
+            if select.select([conn], [], [], 5) == ([], [], []):
+                time.sleep(30)
+                continue
+            conn.poll()
+            if conn.notifies:
+                notify = conn.notifies.pop()
+                print("Got NOTIFY:", notify.payload)
+                callback(conn)
+                # sleep to not update too continuously
+                time.sleep(15)
 
 
 if __name__ == "__main__":

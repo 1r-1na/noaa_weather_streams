@@ -39,7 +39,7 @@ services:
     volumes:
       - ./postgres:/docker-entrypoint-initdb.d
 
-  python_dashboard:
+  python_dashboards:
     build:
       context: ./noaa_dashboards
       dockerfile: Dockerfile
@@ -47,3 +47,5 @@ services:
       - "8050:8050"
     depends_on:
       - postgres
+      - jobmanager
+      - taskmanager
