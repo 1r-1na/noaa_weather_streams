@@ -12,8 +12,8 @@ db_params = {
     'dbname': 'default',
     'user': 'dev_user',
     'password': 'dev_pw',
-    'host': 'postgres',
-    'port': '5432'
+    'host': 'localhost',
+    'port': '54321'
 }
 
 

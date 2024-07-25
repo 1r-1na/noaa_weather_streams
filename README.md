@@ -11,7 +11,7 @@
 
 ## How To Run
 
-Wir stellen eine Docker-Compose Konfiguration zur Verfügung sowie ein Startup-Script `SubmitFlinkJob.ps1`, welches in folgender Reihenfolge folgendes Ausführt:
+Wir stellen eine Docker-Compose Konfiguration zur Verfügung sowie ein Startup-Script [SubmitFlinkJob.ps1](./SubmitFlinkJob.ps1), welches in folgender Reihenfolge folgendes Ausführt:
 
 1. Die bestehende Infrastruktur plättet
 2. Alle Container wieder startet
@@ -20,11 +20,15 @@ Wir stellen eine Docker-Compose Konfiguration zur Verfügung sowie ein Startup-S
 
 Da wir sehr viel mit den Daten anstellen, braucht das initiale Verabeiten etwas länger und braucht auch einiges an Ressourcen. Fortlaufende Updates (die nur einmal täglich sind, obwohl wir alle 2 min pollen) werden automatisch erkannt und angewandt.
 
+Aufgrund technischer Probleme haben wir ein separates Skript für **die Anzeige einiger Dashboards** erstellt. Dies sollte erst ausgeführt werden, wenn Flink einige Zeit schon die Jobs bearbeitet, da das Lesen aus der Datenbank die Flink-Jobs zum canceln bringt.
+
+Um nun Dashboards sehen zu können, muss [Dashboards.ps1](./noaa_dashboards/Dashboards.ps1) ausgeführt werden, welches den entsprechenden Docker Container erstellt. Über `http://localhost:8050/` können dann im Browser einige Dashboards begutachtet werden.
+
 ## Ergebnisse
 
 ### Speichern der Daten
 
-Unsere flinken Sink-Funktionen sind alles Postgres-Sinks, wir speichern unsere Daten in einer Postgres-Datenbank ab. Urspünglich war gedacht, dass wir direkt auf die Datastreams für die Visualisierung zugreifen, jedoch wurde dass schnell wieder verworfen besonders nachdem uns ChatGPT empfohlen hat, dass wir unsere Daten zuerst in Kafka schreiben, um sie dann dort auszulesen. https://chatgpt.com/share/85b3deae-f47f-4872-9713-2023108105cc
+Unsere flinken Sink-Funktionen sind alles Postgres-Sinks, wir speichern unsere Daten in einer Postgres-Datenbank ab. Urspünglich war gedacht, dass wir direkt auf die Datastreams für die Visualisierung zugreifen, jedoch wurde dass schnell wieder verworfen besonders nachdem uns ChatGPT empfohlen hat, dass wir unsere Daten zuerst in Kafka schreiben, um sie dann dort auszulesen. [Chat GPT Request - Flink Stream Boxplot Python](https://chatgpt.com/share/85b3deae-f47f-4872-9713-2023108105cc)
 
 ### Realtime Streaming
 
@@ -116,15 +120,15 @@ GROUP BY
 
 ## Dashboards
 
-Zusätzlich wurde eine Applikation in Python geschrieben, die ebenfalls im Docker gehostet wird und auf `localhost:8050` erreichbar ist.
+Zusätzlich wurde eine Applikation in Python geschrieben, die ebenfalls im Docker gehostet wird und auf `http://localhost:8050/` erreichbar ist. Siehe [How To Run](#how-to-run).
 
 Zu sehen sind nur einige aggregierte Daten. Es ist möglich, dass die Darstellung aufgrund der verschiedenen Wertebereiche etwas rar oder falsch erscheint. Die Dashboards dienen nur zu einer flinken Übersicht, aufgrund dessen wurden die x- und y-Achsen nicht besser gehandhabt.
 
-Zu Beginn wird auf `localhost:8050` einfach eine Überschrift angezeigt. Nach und nach werden dann die Dashboards geladen. Für eine aktuellere Ansicht muss die Seite neu geladen werden bzw. ein neuer Request gesendet werden.
+Zu Beginn wird auf `http://localhost:8050/` einfach eine Überschrift angezeigt. Nach und nach werden dann die Dashboards geladen. Für eine aktuellere Ansicht muss die Seite neu geladen werden bzw. ein neuer Request gesendet werden.
 
 ![Dashboards Startseite](./resources/startsite.png)
 
-Es kann gut sein, dass es einige Zeit dauert, bis alles geschmeidig funktioniert. Sollte es Probleme geben, sollte eventuell der Container `python_dashboards` neu gestartet werden. Gibt es gröbere Probleme, so kann es helfen, die `python_dashboards` aus der `docker-compose` Datei zu entfernen und im Skript "SubmitFlinkJob.ps1" Folgendes zu entfernen: `--build python_dashboards`. Dann das Skript noch mal ausführen. Im Nachhinein kann `python_dashboards` noch mal einzeln gestartet werden. Dafür einfach die `docker-compose` Datei zurücksetzen und `docker compose up -d --build` ausführen.
+Es kann gut sein, dass es einige Zeit dauert, bis alles geschmeidig funktioniert. Sollte es Probleme geben, sollte eventuell der Container `noaa_dashboards` neu gestartet werden.
 
 Irgendwann sollte die Seite dem folgenden Bild ähneln.
 
