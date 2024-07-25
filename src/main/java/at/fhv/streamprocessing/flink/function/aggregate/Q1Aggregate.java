@@ -10,6 +10,9 @@ public class Q1Aggregate extends AbstractValueKeepingAggregate {
     
     @Override
     protected double calculateValue(LinkedList<Double> measurements) {
+        if (measurements.size() < 2) {
+            return measurements.get(0);
+        }
         Collections.sort(measurements);
         return calculateMedian(measurements.subList(0, measurements.size() / 2));
     }

@@ -10,6 +10,9 @@ public class MedianAggregate extends AbstractValueKeepingAggregate {
 
     @Override
     protected double calculateValue(LinkedList<Double> measurements) {
+        if (measurements.size() < 2) {
+            return measurements.get(0);
+        }
         Collections.sort(measurements);
         return calculateMedian(measurements);
     }
