@@ -32,6 +32,9 @@ public abstract class AbstractValueKeepingAggregate implements AggregateFunction
     @Override
     public AggregatedDataRecord getResult(Tuple2<AggregatedDataRecord, LinkedList<Double>> acc) {
         AggregatedDataRecord accRecord = acc.f0;
+        if (acc.f1.isEmpty()) {
+            return new AggregatedDataRecord(accRecord.country(), accRecord.measurementType(), "INVALID", 0.0, accRecord.startTs(), accRecord.durationDays());
+        }
         double value = calculateValue(acc.f1);
         return new AggregatedDataRecord(accRecord.country(), accRecord.measurementType(), accRecord.aggregationType(), value, accRecord.startTs(), accRecord.durationDays());
     }
@@ -47,7 +50,7 @@ public abstract class AbstractValueKeepingAggregate implements AggregateFunction
         LinkedList<Double> values = acc1.f1;
         values.addAll(acc2.f1);
         AggregatedDataRecord newAcc = new AggregatedDataRecord(accRecord2.country(), accRecord1.measurementType(), accRecord1.aggregationType(), 0.0, startTs, accRecord1.durationDays());
-        return new Tuple2<>(newAcc ,values);
+        return new Tuple2<>(newAcc, values);
     }
 
 }

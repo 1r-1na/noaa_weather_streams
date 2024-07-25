@@ -12,7 +12,7 @@ public class Constants {
 
     public static JdbcExecutionOptions JDBC_EXECUTION_OPTIONS = new JdbcExecutionOptions.Builder()
             .withBatchIntervalMs(1000)
-            .withBatchSize(100)
+            .withBatchSize(1000)
             .build();
 
     public static JdbcConnectionOptions JDBC_CONNECTION_OPTIONS = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()

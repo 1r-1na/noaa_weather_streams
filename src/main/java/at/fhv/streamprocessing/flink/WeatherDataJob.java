@@ -48,7 +48,7 @@ public class WeatherDataJob {
             localizedNoaaRecords
                     .filter(measurementType::filter)
                     .map(measurementType::noaaToLive)
-                    .addSink(PostgresLiveDataSink.createSink())
+                    .addSink(PostgresLiveDataSink.getSink())
                     .name("postgres-" + measurementType.measurementTypeId() + "-live-data-sink");
             // live data end
 
@@ -62,7 +62,7 @@ public class WeatherDataJob {
                         .keyBy(QualityCodeRecord::getKey)
                         .window(timeWindow.windowAssigner())
                         .aggregate(new QualityCodeRecordCounter())
-                        .addSink(PostgresQualityCodeSink.createSink())
+                        .addSink(PostgresQualityCodeSink.getSink())
                         .name("postgres-" + measurementType.measurementTypeId() +  "-quality-code-" + timeWindow.typeId() + "-sink");
                 // minibatch aggregation quality code end
 
@@ -75,7 +75,8 @@ public class WeatherDataJob {
                         .keyBy(AggregatedDataRecord::getKey)
                         .window(timeWindow.windowAssigner())
                         .aggregate(aggregationType.aggregateFunction())
-                        .addSink(PostgresAggregatedDataSink.createSink())
+                        .filter(aggregation -> !aggregation.aggregationType().equals("INVALID"))
+                        .addSink(PostgresAggregatedDataSink.getSink())
                         .name("postgres-" + measurementType.measurementTypeId() + "-" + aggregationType.getTypeId() + "-" + timeWindow.typeId() + "-sink"));
                 // minibatch aggregation country end
 
