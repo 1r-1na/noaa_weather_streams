@@ -135,3 +135,7 @@ Irgendwann sollte die Seite dem folgenden Bild ähneln.
 ![Dashboards](./resources/dashboards.png)
 
 Zu sehen sind Liniendiagramme der verschiedenen Länder, in denen das Minimum, Maximum und der Durchschnittswert pro Tag angezeigt werden. Dies wiederum wurde umgesetzt für die Temperatur, Windgeschwindigkeit, Luftdruck und Niederschlagsdaten. Sobald aggregierte Daten eines ganzen Monats zu Verfügung stehen, wird auch ein Boxplot Diagramm angezeigt für die Daten eines Monats pro Land und pro Messwerttyp. Pro Land werden dann noch die Live Daten in einem Liniendiagram zusammengefasst.
+
+![BoxPlot](./resources/boxplot.png)
+
+![Linediagram](./resources/linediagram.png)
