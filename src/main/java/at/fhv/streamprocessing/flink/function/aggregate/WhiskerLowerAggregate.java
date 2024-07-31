@@ -10,6 +10,9 @@ public class WhiskerLowerAggregate extends AbstractValueKeepingAggregate {
 
     @Override
     protected double calculateValue(LinkedList<Double> measurements) {
+        if (measurements.size() < 2) {
+            return measurements.get(0);
+        }
         Collections.sort(measurements);
         double q1 = calculateMedian(measurements.subList(0, measurements.size() / 2));
         double q3 = calculateMedian(measurements.subList((measurements.size() + 1) / 2, measurements.size()));
