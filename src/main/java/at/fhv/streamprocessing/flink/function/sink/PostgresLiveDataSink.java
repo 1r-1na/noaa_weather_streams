@@ -1,5 +1,6 @@
 package at.fhv.streamprocessing.flink.function.sink;
 
+import at.fhv.streamprocessing.flink.record.AggregatedDataRecord;
 import at.fhv.streamprocessing.flink.util.Constants;
 import at.fhv.streamprocessing.flink.record.LiveDataRecord;
 import org.apache.flink.connector.jdbc.JdbcSink;
@@ -13,7 +14,16 @@ public class PostgresLiveDataSink {
 
     private static final Logger LOG = LoggerFactory.getLogger(PostgresLiveDataSink.class);
 
-    public static SinkFunction<LiveDataRecord> createSink() {
+    private static SinkFunction<LiveDataRecord> singleton = null;
+
+    public static SinkFunction<LiveDataRecord> getSink() {
+        if (singleton == null) {
+            singleton = createSink();
+        }
+        return singleton;
+    }
+
+    private static SinkFunction<LiveDataRecord> createSink() {
 
         StringBuilder statement = new StringBuilder()
                 .append("INSERT INTO public.live_values (wban, measurement_type, code, value, timestamp, lat, lon, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ")

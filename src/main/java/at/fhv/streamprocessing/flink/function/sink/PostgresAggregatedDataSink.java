@@ -13,7 +13,15 @@ public class PostgresAggregatedDataSink {
 
     private static final Logger LOG = LoggerFactory.getLogger(PostgresAggregatedDataSink.class);
 
-    public static SinkFunction<AggregatedDataRecord> createSink() {
+    private static SinkFunction<AggregatedDataRecord> singleton = null;
+
+    public static SinkFunction<AggregatedDataRecord> getSink() {
+        if (singleton == null) {
+            singleton = createSink();
+        }
+        return singleton;
+    }
+    private static SinkFunction<AggregatedDataRecord> createSink() {
         String insertStatement = "INSERT INTO public.aggregated_data (country, measurement_type, aggregation_type, value, start_ts, duration_days) VALUES (?, ?, ?, ?, ?, ?);";
         return JdbcSink.sink(insertStatement, (ps, record) -> {
                     ps.setString(1, record.country());
